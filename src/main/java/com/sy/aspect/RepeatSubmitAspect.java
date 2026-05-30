@@ -44,7 +44,16 @@ public class RepeatSubmitAspect {
         // 1. 获取包装后的request对象
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes.getRequest();
-        RequestWrapper requestWrapper = (RequestWrapper) request;
+        
+        // 检查请求是否已经被包装
+        RequestWrapper requestWrapper;
+        if (request instanceof RequestWrapper) {
+            requestWrapper = (RequestWrapper) request;
+        } else {
+            // 如果没有被包装，直接使用原始请求（可能无法获取body）
+            // 这种情况下跳过重复提交检查
+            return joinPoint.proceed();
+        }
 
         // 2. 获取注解配置的限制时间（默认3秒）
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

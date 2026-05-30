@@ -1,6 +1,5 @@
 package com.sy.mapper;
 
-import com.sy.model.Collect;
 import com.sy.model.Collectitems;
 import org.apache.ibatis.annotations.Param;
 

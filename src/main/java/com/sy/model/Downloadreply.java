@@ -10,7 +10,7 @@ public class Downloadreply {
     private Integer userid;
     private String content;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "Alisa/Shanghai")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private Date createtime;
     private Integer appraise;
     private Integer dowid;

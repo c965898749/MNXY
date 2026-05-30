@@ -3,8 +3,8 @@ package com.sy.service.impl;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.annotations.TableField;
-import com.baomidou.mybatisplus.mapper.Wrapper;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sy.mapper.game.*;
 import com.sy.mapper.UserMapper;
 import com.sy.model.DailyContentVO;
@@ -18,13 +18,13 @@ import com.sy.service.GameServiceService;
 import com.sy.service.UserServic;
 import com.sy.tool.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -2744,7 +2744,7 @@ public class GameServiceServiceImpl implements GameServiceService {
 
     @Override
     @Transactional
-    @NoRepeatSubmit(limitSeconds = 5)
+    @NoRepeatSubmit(limitSeconds = 1)
     public BaseResp getStore(TokenDto token, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
         if (token == null || Xtool.isNull(token.getToken())) {
@@ -2766,7 +2766,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         if (user.getShopUpdate() == null || (user.getShopUpdate().compareTo(date2) < 0 && "1".equals(token.getStr()))) {
             Date date = new Date();
             user.setShopUpdate(date);
-            map.put("shopUpdate", date);
+            map.put("shopUpdate", date.getTime());
             List<GameItemShop> gameItemShopList = gameItemShopMapper.selectAll();
             DynamicItemPicker picker = new DynamicItemPicker();
             for (GameItemShop gameItemShop : gameItemShopList) {
@@ -2825,7 +2825,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 record.setPicked(json);
                 gameTimeRecordMapper.insert(record);
             }
-            map.put("shopUpdate", user.getShopUpdate());
+            map.put("shopUpdate", user.getShopUpdate() != null ? user.getShopUpdate().getTime() : null);
         }
         baseResp.setSuccess(1);
         baseResp.setData(map);
@@ -7645,12 +7645,15 @@ public class GameServiceServiceImpl implements GameServiceService {
         map.put("userInfo", userInfo);
         map.put("battle", battle);
         map.put("gameArenaSignup", gameArenaSignup);
-        List<GameArenaBattle> gameArenaBattle = gameArenaBattleMapper.selectList(new Wrapper<GameArenaBattle>() {
-            @Override
-            public String getSqlSegment() {
-                return "where arena_level=" + token.getFinalLevel() + " and week_num=" + arenaWeek + " ORDER BY  createtime desc limit 1";
-            }
-        });
+//        List<GameArenaBattle> gameArenaBattle = gameArenaBattleMapper.selectList(new Wrapper<GameArenaBattle>() {
+//            @Override
+//            public String getSqlSegment() {
+//                return "where arena_level=" + token.getFinalLevel() + " and week_num=" + arenaWeek + " ORDER BY  createtime desc limit 1";
+//            }
+//        });
+        List<GameArenaBattle> gameArenaBattle = gameArenaBattleMapper.selectList(new LambdaQueryWrapper<GameArenaBattle>()
+                .eq(GameArenaBattle::getArenaLevel, token.getFinalLevel()).eq(GameArenaBattle::getWeekNum, arenaWeek)
+                .orderByDesc(GameArenaBattle::getCreatetime).last("limit 1"));
         if (Xtool.isNotNull(gameArenaBattle)) {
             GameArenaBattle gameArenaBattle2 = gameArenaBattle.get(0);
             gameArenaBattle2.setTimeStr(this.formatTime(gameArenaBattle2.getCreatetime()));
@@ -8158,12 +8161,8 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
 
 
-        List<FriendRelation> friendRelationList = friendRelationMapper.selectList(new Wrapper<FriendRelation>() {
-            @Override
-            public String getSqlSegment() {
-                return "where user_id =" + userId + " and friend_id =" + token.getUserId();
-            }
-        });
+        List<FriendRelation> friendRelationList = friendRelationMapper.selectList(new LambdaQueryWrapper<FriendRelation>()
+                .eq(FriendRelation::getUserId, userId).eq(FriendRelation::getFriendId, token.getUserId()));
         if (Xtool.isNotNull(friendRelationList)) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("请勿重复结伴");
@@ -8935,12 +8934,9 @@ public class GameServiceServiceImpl implements GameServiceService {
         data.put("gameArenaSignup", gameArenaSignups.get(0));
         List<GameArenaBattlecharacters> gameArenaBattlecharacters = gameArenaBattlecharactersMapper.selectByMap(map);
         data.put("gameArenaBattlecharacters", gameArenaBattlecharacters);
-        List<GameArenaBattle> gameArenaBattle = gameArenaBattleMapper.selectList(new Wrapper<GameArenaBattle>() {
-            @Override
-            public String getSqlSegment() {
-                return "where arena_level=" + token.getFinalLevel() + " and week_num=" + arenaWeek + " ORDER BY  createtime desc limit 1";
-            }
-        });
+        List<GameArenaBattle> gameArenaBattle = gameArenaBattleMapper.selectList(new LambdaQueryWrapper<GameArenaBattle>()
+                .eq(GameArenaBattle::getArenaLevel, token.getFinalLevel()).eq(GameArenaBattle::getWeekNum, arenaWeek)
+                .orderByDesc(GameArenaBattle::getCreatetime).last("limit 1"));
         Integer ranking = gameArenaRankMapper.getArenaRanking(userId, token.getFinalLevel(), arenaWeek);
         if (Xtool.isNotNull(gameArenaBattle)) {
             GameArenaBattle gameArenaBattle2 = gameArenaBattle.get(0);

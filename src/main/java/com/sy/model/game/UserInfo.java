@@ -50,9 +50,11 @@ public class UserInfo {
     private String gameImg;
     //20251112
     private Integer tiliCount;
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
     private Date tiliCountTime;
     //20251109
     private Integer huoliCount;
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
     private Date huoliCountTime;
     //20251103
     private String chapter;
@@ -74,6 +76,7 @@ public class UserInfo {
     private Integer nj;
     private Integer arenaCount;
     private Integer weiwanCount;
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
     private Date shopUpdate;
 
     //

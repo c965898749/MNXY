@@ -1,6 +1,5 @@
 package com.sy.mapper;
 
-import com.sy.model.Download;
 import com.sy.model.Resocollect;
 import org.apache.ibatis.annotations.Param;
 

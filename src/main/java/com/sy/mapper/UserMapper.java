@@ -49,22 +49,6 @@ public interface UserMapper {
     //根据用户ID扣除积分
     int updateAskMoneyByUserID(@Param("userID")Integer userID,@Param("askMoney")Integer askMoney);
 
-   //根据userId查询粉丝
-    List<Fans> selectAllFansByUserid(Integer userId);
-    //根据userId查询关注的人
-    List<Fans> selectAllreFansByUserId(Integer userId);
-    //根据关注者ID和被关注者ID查看是否有关注记录
-    int selectFansByFansedidAndFansid(@Param("fansedid")Integer fansedid,@Param("fansid")Integer fansid);
-    //根据用户ID获取所有博客
-    List<Blog> selectAllBlogByUserid(Integer userID);
-    //根据用户ID获取所有资源
-    List<Upload> selectAllUploadByUserid(Integer userID);
-    //根据用户ID获取所有论坛
-    List<Forum> selectAllForumByUserid(Integer userID);
-    //根据用户ID获取所有问答
-    List<Ask> selectAllAskByUserid(Integer userID);
-    //根据用户ID查询用户问答积分
-    double selectAskmoneybyUserID(Integer userId);
     //修改用户
     int updateuser(User user);
 
@@ -127,12 +111,6 @@ public interface UserMapper {
      */
     public User getUserById(User user) throws Exception;
 
-    /**
-     * 新增用户
-     * @param user
-     * @return
-     */
-    public int addUser(User user) throws Exception;
 
     /**
      * 修改用户

@@ -113,38 +113,7 @@
     <update id="updateAskMoneyByUserID">
         update user set askmoney=askmoney-#{askMoney} where userId=#{userID}
     </update>
-    <!--根据userId查询粉丝-->
-    <select id="selectAllFansByUserid" resultType="com.sy.model.Fans">
-       select * from fans where fansedid=#{userId}
-    </select>
-    <!--根据userId查询关注的人-->
-    <select id="selectAllreFansByUserId" resultType="com.sy.model.Fans">
-       select * from fans where fansid=#{userId}
-    </select>
-    <!--根据关注者ID和被关注者ID查看是否有关注记录-->
-    <select id="selectFansByFansedidAndFansid" resultType="java.lang.Integer">
-       select count(*) from fans where fansedid=#{fansedid} and fansid=#{fansid}
-    </select>
-    <!--根据关注者ID和被关注者ID查看是否有关注记录-->
-    <select id="selectAllBlogByUserid" resultType="com.sy.model.Blog">
-       select * from blog where userid=#{userID}
-    </select>
-    <!--根据用户ID获取所有资源-->
-    <select id="selectAllUploadByUserid" resultType="com.sy.model.Upload">
-       select * from upload where userid=#{userID}
-    </select>
-    <!--根据用户ID获取所有论坛-->
-    <select id="selectAllForumByUserid" resultType="com.sy.model.Forum">
-       select * from forum where userId=#{userID}
-    </select>
-    <!--根据用户ID获取所有问答-->
-    <select id="selectAllAskByUserid" resultType="com.sy.model.Ask">
-       select * from ask where userId=#{userID}
-    </select>
-    <!--根据用户ID查询用户问答积分-->
-    <select id="selectAskmoneybyUserID" resultType="java.lang.Double">
-       select askmoney from user where userId=#{userId}
-    </select>
+
     <!--修改用户-->
     <update id="updateuser" parameterType="com.sy.model.User">
         update user
