@@ -9,7 +9,6 @@ import com.sy.mapper.game.*;
 import com.sy.mapper.UserMapper;
 import com.sy.model.DailyContentVO;
 import com.sy.model.DailyListItemVO;
-import com.sy.model.PaymentRecord;
 import com.sy.model.User;
 import com.sy.model.game.*;
 import com.sy.model.game.Character;
@@ -157,6 +156,8 @@ public class GameServiceServiceImpl implements GameServiceService {
     private DailyViewContentMapper dailyViewContentMapper;
     @Autowired
     private DailyViewRecordMapper dailyViewRecordMapper;
+    @Autowired
+    private CraftMapper craftMapper;
     // 最大体力值
     private static final int MAX_STAMINA = 720;
     // 每10分钟恢复1点体力
@@ -2187,10 +2188,15 @@ public class GameServiceServiceImpl implements GameServiceService {
 
         LevelUpResult result = this.calculateLevelUp(mainLevel, mainExp, materials, expTable, silverTable, maxLevel, token.getId());
 
-
         for (Map.Entry<String, Integer> entry : myMap.entrySet()) {
             EqCharacters characters = eqCharactersMapper.listById(token.getUserId(), entry.getKey());
-            characters.setIsDelete("1");
+            if (characters.getStackCount() - entry.getValue() >= 0) {
+                characters.setStackCount(characters.getStackCount() - entry.getValue());
+                characters.setLv(1);
+                characters.setExp(5);
+            } else {
+                characters.setIsDelete("1");
+            }
             eqCharactersMapper.updateByPrimaryKey(characters);
         }
         EqCharacters characters = eqCharactersMapper.listById(token.getUserId(), token.getId());
@@ -2739,6 +2745,182 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setData(resultMap);
         baseResp.setSuccess(1);
         baseResp.setErrorMsg("领取成功");
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp cailiao(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        List<Craft> craftList=craftMapper.selectList(new LambdaQueryWrapper<>());
+        String itemIds=craftList.stream().map(Craft::getItemIdId).map(String::valueOf).collect(Collectors.joining(","));
+        List<GamePlayerBag> itemBaseList = gamePlayerBagMapper.goIntoListByIdAndItemIds(userId, itemIds);
+        baseResp.setSuccess(1);
+        baseResp.setData(itemBaseList);
+        baseResp.setErrorMsg("成功");
+        return baseResp;
+    }
+
+    @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp hechenCailiao(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        if (Xtool.isNull(token.getId())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("请选择合成素材");
+            return baseResp;
+        }
+        List<Craft> craftList=craftMapper.selectList(new LambdaQueryWrapper<Craft>()
+                .eq(Craft::getItemIdId, token.getId()));
+        if (Xtool.isNull(craftList)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("素材暂无开发合成");
+            return baseResp;
+        }
+        Craft craft=craftList.get(0);
+        GamePlayerBag playerBag=gamePlayerBagMapper.goIntoListByIdAndItemId(userId, craft.getItemIdId());
+        if (playerBag==null){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("合成素材不足");
+            return baseResp;
+        }
+        if (playerBag.getItemCount()<craft.getMaterialCount()){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("合成素材不足");
+            return baseResp;
+        }
+
+        
+        if (playerBag.getItemCount() - craft.getMaterialCount() > 0) {
+            playerBag.setItemCount(playerBag.getItemCount() - craft.getMaterialCount());
+            baseResp.setData(playerBag.getItemCount());
+        } else {
+            playerBag.setIsDelete("1");
+            baseResp.setData(0);
+        }
+        gamePlayerBagMapper.updateById(playerBag);
+        
+        // 获得 multiple 个目标物品
+        List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                .eq(GamePlayerBag::getItemId, craft.getTargetId())
+                .eq(GamePlayerBag::getUserId, userId)
+                .eq(GamePlayerBag::getIsDelete, "0"));
+        if (Xtool.isNotNull(playerBagList)) {
+            GamePlayerBag bag = playerBagList.get(0);
+            bag.setItemCount(bag.getItemCount() + 1);
+            gamePlayerBagMapper.updateById(bag);
+        } else {
+            GamePlayerBag bag = new GamePlayerBag();
+            bag.setUserId(Integer.parseInt(userId));
+            bag.setItemCount(1);
+            bag.setGridIndex(1);
+            bag.setItemId(craft.getTargetId());
+            gamePlayerBagMapper.insert(bag);
+        }
+        baseResp.setSuccess(1);
+        baseResp.setData(playerBag.getItemCount());
+        baseResp.setErrorMsg("成功");
+        return baseResp;
+    }
+
+    @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp yhechenCailiao(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        if (Xtool.isNull(token.getId())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("请选择合成素材");
+            return baseResp;
+        }
+        List<Craft> craftList=craftMapper.selectList(new LambdaQueryWrapper<Craft>()
+                .eq(Craft::getItemIdId, token.getId()));
+        if (Xtool.isNull(craftList)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("素材暂无开发合成");
+            return baseResp;
+        }
+        Craft craft=craftList.get(0);
+        GamePlayerBag playerBag=gamePlayerBagMapper.goIntoListByIdAndItemId(userId, craft.getItemIdId());
+        if (playerBag==null){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("合成素材不足");
+            return baseResp;
+        }
+        if (playerBag.getItemCount()<craft.getMaterialCount()){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("合成素材不足");
+            return baseResp;
+        }
+        // 计算playerBag.getItemCount()被craft.getMaterialCount()整除的倍数
+        int multiple = playerBag.getItemCount() / craft.getMaterialCount();
+        int totalMaterialUsed = multiple * craft.getMaterialCount();
+        
+        if (playerBag.getItemCount() - totalMaterialUsed > 0) {
+            playerBag.setItemCount(playerBag.getItemCount() - totalMaterialUsed);
+            baseResp.setData(playerBag.getItemCount());
+        } else {
+            playerBag.setIsDelete("1");
+            baseResp.setData(0);
+        }
+        gamePlayerBagMapper.updateById(playerBag);
+        
+        // 获得 multiple 个目标物品
+        List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                .eq(GamePlayerBag::getItemId, craft.getTargetId())
+                .eq(GamePlayerBag::getUserId, userId)
+                .eq(GamePlayerBag::getIsDelete, "0"));
+        if (Xtool.isNotNull(playerBagList)) {
+            GamePlayerBag bag = playerBagList.get(0);
+            bag.setItemCount(bag.getItemCount() + multiple);
+            gamePlayerBagMapper.updateById(bag);
+        } else {
+            GamePlayerBag bag = new GamePlayerBag();
+            bag.setUserId(Integer.parseInt(userId));
+            bag.setItemCount(multiple);
+            bag.setGridIndex(1);
+            bag.setItemId(craft.getTargetId());
+            gamePlayerBagMapper.insert(bag);
+        }
+        baseResp.setSuccess(1);
+        baseResp.setData(playerBag.getItemCount());
+        baseResp.setErrorMsg("成功");
         return baseResp;
     }
 
@@ -6818,10 +7000,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             // ================== 优化后 ==================
             BigDecimal addExp = new BigDecimal(50).multiply(new BigDecimal(num));
             BigDecimal exp = user.getExp().add(addExp);
-
+            // 定义 lv 并默认赋值，防止空指针
+            BigDecimal lv = BigDecimal.ZERO;
             if (exp.compareTo(BigDecimal.valueOf(1000)) >= 0) {
                 // 安全取整（不足1=0，不会有小数）
-                BigDecimal lv = exp.divide(BigDecimal.valueOf(1000), 0, RoundingMode.DOWN);
+                // 安全取整
+                lv = exp.divide(BigDecimal.valueOf(1000), 0, RoundingMode.DOWN);
                 // 计算剩余经验
                 user.setExp(exp.subtract(BigDecimal.valueOf(1000).multiply(lv)));
 
@@ -7373,14 +7557,26 @@ public class GameServiceServiceImpl implements GameServiceService {
                             charactersMapper.insert(characters);
                         }
                     } else if ("7".equals(content.getRewardType() + "")) {
-                        //装备
-                        EqCharacters characters = new EqCharacters();
-                        characters.setStackCount(0);
-                        characters.setId(content.getItemId()+"");
-                        characters.setLv(1);
-                        characters.setUserId(Integer.parseInt(userId));
-                        characters.setMaxLv(1);
-                        eqCharactersMapper.insert(characters);
+                        EqCharacters characters1 = eqCharactersMapper.listById2(userId, content.getItemId() + "");
+                        if (characters1 != null) {
+                            characters1.setStackCount(characters1.getStackCount() + content.getRewardAmount());
+                            eqCharactersMapper.updateByPrimaryKey(characters1);
+                        } else {
+                            EqCard card = eqCardMapper.selectByid(content.getItemId() + "");
+                            if (card == null) {
+                                baseResp.setErrorMsg("服务器异常联想管理员");
+                                baseResp.setSuccess(0);
+                                return baseResp;
+                            }
+                            EqCharacters characters = new EqCharacters();
+                            characters.setStackCount(content.getRewardAmount() - 1);
+                            characters.setId(content.getItemId() + "");
+                            characters.setLv(1);
+                            characters.setUserId(Integer.parseInt(userId));
+                            characters.setStar(new BigDecimal(1));
+                            characters.setMaxLv(1);
+                            eqCharactersMapper.insert(characters);
+                        }
                     } else  if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
                         //物品
                         Map itemMap = new HashMap();
