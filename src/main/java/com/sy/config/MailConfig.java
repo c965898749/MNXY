@@ -47,7 +47,14 @@ public class MailConfig {
         
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.timeout", "25000");
+        props.put("mail.smtp.timeout", "30000");
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.writetimeout", "30000");
+        // SSL配置
+        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.ssl.trust", host);
+        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.ssl.trust", host);
         mailSender.setJavaMailProperties(props);
         
         return mailSender;
