@@ -59,6 +59,13 @@ public class GameContoller {
         }
     }
 
+    /**
+     * 注册
+     *
+     * @param user
+     * @param request
+     * @return
+     */
     @RequestMapping(value = "registerGame", method = RequestMethod.POST)
     @CrossOrigin
     public BaseResp registerGame(@RequestBody User user, HttpServletRequest request) {
@@ -212,48 +219,7 @@ public class GameContoller {
         }
     }
 
-    @RequestMapping(value = "updateTli", method = RequestMethod.POST)
-    @CrossOrigin
-    public BaseResp updateTli(@RequestBody TokenDto token, HttpServletRequest request) {
-        BaseResp baseResp = new BaseResp();
-        try {
-            baseResp = gameServiceService.updateTli(token, request);
-            return baseResp;
-        } catch (Exception e) {
-            e.printStackTrace();
-            baseResp.setSuccess(0);
-            return baseResp;
-        }
-    }
 
-    @RequestMapping(value = "updateTli3", method = RequestMethod.POST)
-    @CrossOrigin
-    public BaseResp updateTli3(@RequestBody TokenDto token, HttpServletRequest request) {
-        BaseResp baseResp = new BaseResp();
-        try {
-            baseResp = gameServiceService.updateTli3(token, request);
-            return baseResp;
-        } catch (Exception e) {
-            e.printStackTrace();
-            baseResp.setSuccess(0);
-            return baseResp;
-        }
-    }
-
-
-    @RequestMapping(value = "updateTli2", method = RequestMethod.POST)
-    @CrossOrigin
-    public BaseResp updateTli2(@RequestBody TokenDto token, HttpServletRequest request) {
-        BaseResp baseResp = new BaseResp();
-        try {
-            baseResp = gameServiceService.updateTli2(token, request);
-            return baseResp;
-        } catch (Exception e) {
-            e.printStackTrace();
-            baseResp.setSuccess(0);
-            return baseResp;
-        }
-    }
     /**
      * 卡牌飞升
      */
@@ -552,7 +518,7 @@ public class GameContoller {
     }
 
     /**
-     * 祝福
+     * 好友祝福
      *
      * @param token
      * @param request
@@ -888,6 +854,13 @@ public class GameContoller {
             return baseResp;
         }
     }
+    /**
+     * 获取好友列表
+     *
+     * @param token
+     * @param request
+     * @return
+     */
 
     @PostMapping("friendAllList")
     @CrossOrigin
@@ -1651,6 +1624,26 @@ public class GameContoller {
         }
     }
 
+    /**
+     * 活跃领取
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("livelyReceive")
+    @CrossOrigin
+    public BaseResp livelyReceive(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.livelyReceive(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
     @PostMapping("cailiao")
     @CrossOrigin
     public BaseResp cailiao(@RequestBody TokenDto token, HttpServletRequest request) {
@@ -1664,7 +1657,12 @@ public class GameContoller {
             return baseResp;
         }
     }
-
+    /**
+     * 材料合成
+     * @param token
+     * @param request
+     * @return
+     */
     @PostMapping("hechenCailiao")
     @CrossOrigin
     public BaseResp hechenCailiao(@RequestBody TokenDto token, HttpServletRequest request) {
@@ -1679,6 +1677,12 @@ public class GameContoller {
         }
     }
 
+    /**
+     * 材料合成
+     * @param token
+     * @param request
+     * @return
+     */
     @PostMapping("yhechenCailiao")
     @CrossOrigin
     public BaseResp yhechenCailiao(@RequestBody TokenDto token, HttpServletRequest request) {
@@ -1700,6 +1704,120 @@ public class GameContoller {
         BaseResp baseResp = new BaseResp();
         try {
             baseResp = gameServiceService.emailManage(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+    @PostMapping("getUserMine")
+    @CrossOrigin
+    public BaseResp getUserMine(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.getUserMine(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+    /**
+     * 升级矿机
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("upgradeMine")
+    @CrossOrigin
+    public BaseResp upgradeMine(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.upgradeMine(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+    /**
+     * 收集所有银币
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("collectAllSilver")
+    @CrossOrigin
+    public BaseResp collectAllSilver(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.collectAllSilver(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+    /**
+     * 抢矿机
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("battle7")
+    @CrossOrigin
+    public BaseResp robMine(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.robMine(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+
+    /**
+     * 抢矿机日志
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("queryBeRobLog")
+    @CrossOrigin
+    public BaseResp queryBeRobLog(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.queryBeRobLog(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+
+    /**
+     * 矿场列表
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("kuanList")
+    @CrossOrigin
+    public BaseResp kuanList(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.kuanList(token, request);
             return baseResp;
         } catch (Exception e) {
             e.printStackTrace();

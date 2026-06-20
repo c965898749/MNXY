@@ -39,19 +39,34 @@
                 ) AS temp
             );
     </select>
+
+    <select id="SelectUserKuanItemId" resultType="com.sy.model.game.UserMine">
+        SELECT
+        ur.*,
+        u.nickname,
+        u.game_img,
+        u.win_count,
+        u.lv
+        FROM user_mine ur
+        -- 关联用户基础信息表
+        INNER JOIN `user` u ON ur.user_id = u.userId
+        WHERE ur.user_id &lt;&gt; #{userId} and ur.current_silver >0
+        ORDER BY RAND()
+        LIMIT 7;
+    </select>
     <!--新增所有列-->
     <insert id="insertUser" keyProperty="userId" useGeneratedKeys="true">
         insert into yimem.user(username, userpassword, sex, nickname, birthday, provinces, city, county, description,
                                industry, job, askSuminter, headImg, blogCount, attentionCount, fansCount, resourceCount,
                                forumCount, askCount, collectCount, downloadmoney, commentCount, likeCount, level,
                                visitorCount, ranking, downCount, askmoney, unreadreplaycount, readquerylikecount,
-                               unreadfanscount, openid, isEmil,status,game_ranking,yao_code,my_code)
+                               unreadfanscount, openid, isEmil,status,game_ranking,yao_code,my_code,exp)
         values (#{username}, #{userpassword}, #{sex}, #{nickname}, #{birthday}, #{provinces}, #{city}, #{county},
                 #{description}, #{industry}, #{job}, #{askSuminter}, #{headImg}, #{blogCount}, #{attentionCount},
                 #{fansCount}, #{resourceCount}, #{forumCount}, #{askCount}, #{collectCount}, #{downloadmoney},
                 #{commentCount}, #{likeCount}, #{level}, #{visitorCount}, #{ranking}, #{downCount}, #{askmoney},
                 #{unreadreplaycount}, #{readquerylikecount}, #{unreadfanscount}, #{openid}, #{isEmil},#{status}
-                ,#{gameRanking},#{yaoCode},#{myCode})
+                ,#{gameRanking},#{yaoCode},#{myCode},#{exp})
     </insert>
     <!--修改用户头像-->
     <insert id="updateUserHeadImgByID">
@@ -667,7 +682,7 @@
 		update user set chongzhi_tower = '3'
 	</update>
     <update id="updatechongzhiQiangduo" parameterType="com.sy.model.User">
-		update user set duo_count = '10'
+		update user set duo_count = '40'
 	</update>
     <update id="updatebaoCount" parameterType="com.sy.model.User">
 		update user set bao_count = '20'

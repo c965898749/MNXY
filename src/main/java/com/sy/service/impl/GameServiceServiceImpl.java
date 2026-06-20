@@ -20,6 +20,7 @@ import com.sy.tool.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mail.SimpleMailMessage;
@@ -35,6 +36,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -169,12 +171,23 @@ public class GameServiceServiceImpl implements GameServiceService {
     private CraftMapper craftMapper;
     @Resource
     private JavaMailSender javaMailSender;
-
+    @Resource
+    private UserMineMapper userMineMapper;
     @Resource
     private SimpleMailMessage simpleMailMessage;
 
+    @Resource
+    private MineLevelConfigMapper mineLevelConfigMapper;
+    @Resource
+    private MineRobLogMapper mineRobLogMapper;
+    @Resource
+    private LivelyGiftContentMapper livelyGiftContentMapper;
+    @Resource
+    private LivelyGiftMapper livelyGiftMapper;
+    @Resource
+    private LivelyGiftRecordMapper livelyGiftRecordMapper;
     // 最大体力值
-    private static final int MAX_STAMINA = 720;
+    private static final int MAX_STAMINA = 1500;
     // 每10分钟恢复1点体力
     private static final long RECOVER_INTERVAL_MINUTES = 10;
 
@@ -191,7 +204,6 @@ public class GameServiceServiceImpl implements GameServiceService {
     };
 
     @Override
-    @Transactional
     public BaseResp loginGame(User user, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
         if (user == null) {
@@ -372,7 +384,7 @@ public class GameServiceServiceImpl implements GameServiceService {
     @NoRepeatSubmit(limitSeconds = 1)
     public BaseResp registerGame(User user2, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
-
+        try {
             if (user2 == null) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("请输入账号和密码");
@@ -451,11 +463,15 @@ public class GameServiceServiceImpl implements GameServiceService {
                 user.setUnreadreplaycount(0);
                 user.setReadquerylikecount(0);
                 user.setUnreadfanscount(0);
-                user.setIsEmil("1");
+                user.setIsEmil("0");
+                user.setExp(BigDecimal.ZERO);
                 user.setStatus(1);
                 InviteCodeGenerator generator = InviteCodeGenerator.getInstance();
                 user.setMyCode(generator.generateInviteCode(12));
-                user.setYaoCode(user2.getYaoCode());
+                List<User> users = userMapper.selectUserByYaoCode(user2.getYaoCode2());
+                if (Xtool.isNotNull(users)) {
+                    user.setYaoCode(user2.getYaoCode2());
+                }
                 int result = userMapper.insertUser(user);
                 if (result <= 0) {
                     baseResp.setSuccess(0);
@@ -472,6 +488,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             User emp = userMapper.selectUserByusername(user.getUsername());
             Characters characters = new Characters();
             BeanUtils.copyProperties(card, characters);
+            characters.setUuid(null);
             characters.setId("1002");
             characters.setLv(1);
             characters.setGoIntoNum(1);
@@ -483,6 +500,11 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setSuccess(1);
             baseResp.setErrorMsg("注册成功！");
             return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
     }
 
     @Override
@@ -525,11 +547,19 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setSuccess(1);
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
+        //计算体力和活力
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                info.getTiliCount(),
+                info.getTiliCountTime(),
+                info.getHuoliCount(),
+                info.getHuoliCountTime()
+        );
+        info.setTiliCount(refresh.getTiliCount());
+        info.setTiliCountTime(refresh.getTiliCountTime());
+        info.setHuoliCount(refresh.getHuoliCount());
+        info.setHuoliCountTime(refresh.getHuoliCountTime());
+
         //获取卡牌数据
-//        private Integer bronze;
-//        private Integer darkSteel;
-//        private Integer purpleGold;
-//        private Integer crystal;
         List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
         List<EqCharacters> characterEqList = eqCharactersMapper.selectByUserId(user.getUserId());
         info.setBronze(0);
@@ -563,84 +593,6 @@ public class GameServiceServiceImpl implements GameServiceService {
         return baseResp;
     }
 
-    @Override
-    public BaseResp updateTli(TokenDto token, HttpServletRequest request) throws Exception {
-        BaseResp baseResp = new BaseResp();
-        if (token == null || Xtool.isNull(token.getToken())) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        String userId = token.getUserId();
-        if (Xtool.isNull(userId)) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        if (Xtool.isNull(token.getTiLi())) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("游戏异常，请注销重新登录");
-            return baseResp;
-        }
-        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
-        user.setTiliCount(token.getTiLi());
-        user.setTiliCountTime(new Date(Long.parseLong(token.getStr())));
-        userMapper.updateuserTili(user);
-        baseResp.setSuccess(1);
-        baseResp.setErrorMsg("同步成攻");
-        return baseResp;
-    }
-
-    @Override
-    public BaseResp updateTli3(TokenDto token, HttpServletRequest request) throws Exception {
-        BaseResp baseResp = new BaseResp();
-        if (token == null || Xtool.isNull(token.getToken())) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        String userId = token.getUserId();
-        if (Xtool.isNull(userId)) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        if (Xtool.isNull(token.getHuoLi())) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("游戏异常，请注销重新登录");
-            return baseResp;
-        }
-        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
-        user.setHuoliCount(token.getHuoLi());
-        user.setHuoliCountTime(new Date(Long.parseLong(token.getStr())));
-        userMapper.updateuserHuoli(user);
-        baseResp.setSuccess(1);
-        baseResp.setErrorMsg("同步成攻");
-        return baseResp;
-    }
-
-    @Override
-    public BaseResp updateTli2(TokenDto token, HttpServletRequest request) throws Exception {
-        BaseResp baseResp = new BaseResp();
-        if (token == null || Xtool.isNull(token.getToken())) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        String userId = token.getUserId();
-        if (Xtool.isNull(userId)) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
-            return baseResp;
-        }
-        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
-        UserInfo userInfo = new UserInfo();
-        BeanUtils.copyProperties(user, userInfo);
-        baseResp.setSuccess(1);
-        baseResp.setErrorMsg("同步成攻");
-        baseResp.setData(userInfo);
-        return baseResp;
-    }
 
     @Override
     @Transactional
@@ -2764,6 +2716,203 @@ public class GameServiceServiceImpl implements GameServiceService {
     }
 
     @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp livelyReceive(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        String giftCode = token.getStr();
+//        String platform = request.getPlatform();
+//        String ip = request.getIpAddress();
+
+        // 1. 查询礼包基础信息
+        Map map = new HashMap();
+        map.put("gift_code", giftCode);
+        map.put("is_active", "1");
+        List<LivelyGift> livelyGifts = livelyGiftMapper.selectByMap(map);
+        if (Xtool.isNull(livelyGifts)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("活跃宝箱不存在或已禁用");
+            return baseResp;
+        }
+        LivelyGift livelyGift = livelyGifts.get(0);
+
+        List<DailyView> validGifts = dailyViewMapper.selectByMap(new HashMap<>());
+
+        Integer finish = 0;
+        // TODO 查看活跃度
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String today = sdf.format(new Date());
+        for (DailyView gift : validGifts) {
+            List<DailyViewRecord> list = dailyViewRecordMapper.selectList(new LambdaQueryWrapper<DailyViewRecord>()
+                    .eq(DailyViewRecord::getUserId,userId)
+                    .eq(DailyViewRecord::getGiftCode,gift.getGiftCode())
+                    .eq(DailyViewRecord::getGetTime, today)
+                    .eq(DailyViewRecord::getStatus, 1));
+            if (Xtool.isNotNull(list)) {
+                finish++;
+            }
+        }
+        double rate = 0;
+        Integer cc = 0;
+        // 计算实际百分比
+        if (validGifts.size() != 0) {
+            rate = (double) finish / validGifts.size() * 100;
+        }
+        // 区间映射
+        if (rate < 25) {
+            cc=0;
+        } else if (rate < 50) {
+            cc=25;
+        } else if (rate < 75) {
+            cc=50;
+        } else if (rate < 100) {
+            cc=75;
+        } else {
+            cc=100;
+        }
+        if (cc<livelyGift.getTotalQuantity()){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("活跃度不够，请继续努力");
+            return baseResp;
+        }
+
+        // 5. 校验用户领取次数（是否超过单用户上限）
+        Map map3 = new HashMap();
+        map3.put("user_id", userId);
+        map3.put("gift_code", giftCode);
+        map3.put("get_time", today);
+        map3.put("status", 1);
+        List<LivelyGiftRecord> list = livelyGiftRecordMapper.selectByMap(map3);
+        if (Xtool.isNotNull(list)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("活跃宝箱已领取");
+            return baseResp;
+        }
+
+
+        // 8. 记录领取记录
+        LivelyGiftRecord record = new LivelyGiftRecord();
+        record.setUserId(Long.parseLong(userId));
+        record.setGiftId(livelyGift.getGiftId());
+        record.setGiftCode(giftCode);
+        record.setGetTime(sdf.parse(today));
+        record.setStatus(1); // 1：成功
+        record.setPlatform("");
+        record.setIpAddress("");
+        livelyGiftRecordMapper.insert(record);
+
+        // 9. 发放奖励（调用道具/金币发放接口，此处简化）
+        List<PveReward> rewards = new ArrayList<>();
+        Map map4 = new HashMap();
+        map4.put("gift_id", livelyGift.getGiftId());
+        List<LivelyGiftContent> contents = livelyGiftContentMapper.selectByMap(map4);
+        for (LivelyGiftContent content : contents) {
+            PveReward pveReward = new PveReward();
+            pveReward.setItemId(Integer.parseInt(content.getItemId() + ""));
+            pveReward.setItemName(content.getItemName());
+            pveReward.setRewardAmount(content.getItemQuantity());
+            pveReward.setRewardType(content.getItemType() + "");
+            pveReward.setImg(content.getIcon());
+            pveReward.setIndex(0);
+            rewards.add(pveReward);
+            if ("1".equals(content.getItemType() + "")) {
+                //灵石
+                user.setDiamond(user.getDiamond().add(new BigDecimal(content.getItemQuantity())));
+            } else if ("2".equals(content.getItemType() + "")) {
+                user.setGold(user.getGold().add(new BigDecimal(content.getItemQuantity())));
+            } else if ("3".equals(content.getItemType() + "")) {
+                user.setSoul(user.getSoul().add(new BigDecimal(content.getItemQuantity())));
+            } else if ("4".equals(content.getItemType() + "")) {
+                Characters characters1 = charactersMapper.listById(userId, content.getItemId() + "");
+                if (characters1 != null) {
+                    characters1.setStackCount(characters1.getStackCount() + content.getItemQuantity());
+                    charactersMapper.updateByPrimaryKey(characters1);
+                } else {
+                    Card card1 = cardMapper.selectByid(Integer.parseInt(content.getItemId() + ""));
+                    if (card1 == null) {
+                        baseResp.setErrorMsg("服务器异常联想管理员");
+                        baseResp.setSuccess(0);
+                        return baseResp;
+                    }
+                    Characters characters = new Characters();
+                    characters.setStackCount(content.getItemQuantity() - 1);
+                    characters.setId(content.getItemId() + "");
+                    characters.setLv(1);
+                    characters.setUserId(Integer.parseInt(userId));
+                    characters.setStar(new BigDecimal(1));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                    charactersMapper.insert(characters);
+                }
+            } else if ("5".equals(content.getItemType() + "") || "6".equals(content.getItemType() + "")) {
+                Map itemMap = new HashMap();
+                itemMap.put("item_id", content.getItemId());
+                itemMap.put("user_id", userId);
+                itemMap.put("is_delete", "0");
+                List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
+                if (Xtool.isNotNull(playerBagList)) {
+                    GamePlayerBag playerBag = playerBagList.get(0);
+                    playerBag.setItemCount(playerBag.getItemCount() + content.getItemQuantity());
+                    gamePlayerBagMapper.updateById(playerBag);
+                } else {
+                    GamePlayerBag playerBag = new GamePlayerBag();
+                    playerBag.setUserId(Integer.parseInt(userId));
+                    playerBag.setItemCount(content.getItemQuantity());
+                    playerBag.setGridIndex(1);
+                    playerBag.setItemId(Integer.parseInt(content.getItemId() + ""));
+                    gamePlayerBagMapper.insert(playerBag);
+                }
+            }
+        }
+        userMapper.updateuser(user);
+        baseResp.setSuccess(1);
+        UserInfo info = new UserInfo();
+        BeanUtils.copyProperties(user, info);
+        info.setBronze(0);
+        info.setDarkSteel(0);
+        info.setPurpleGold(0);
+        info.setCrystal(0);
+        GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
+        if (playerBag != null) {
+            info.setBronze(playerBag.getItemCount());
+        }
+        GamePlayerBag playerBag1 = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 14);
+        if (playerBag1 != null) {
+            info.setDarkSteel(playerBag1.getItemCount());
+        }
+        GamePlayerBag playerBag2 = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 15);
+        if (playerBag2 != null) {
+            info.setPurpleGold(playerBag2.getItemCount());
+        }
+        GamePlayerBag playerBag3 = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 16);
+        if (playerBag3 != null) {
+            info.setCrystal(playerBag3.getItemCount());
+        }
+        //获取卡牌数据
+        List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
+        info.setCharacterList(formateCharacter(characterList));
+        Map resultMap = new HashMap();
+        resultMap.put("rewards", rewards);
+        resultMap.put("user", info);
+        baseResp.setData(resultMap);
+        baseResp.setSuccess(1);
+        baseResp.setErrorMsg("领取成功");
+        return baseResp;
+    }
+
+    @Override
     public BaseResp cailiao(TokenDto token, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
         if (token == null || Xtool.isNull(token.getToken())) {
@@ -2809,6 +2958,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("请选择合成素材");
             return baseResp;
         }
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
         List<Craft> craftList = craftMapper.selectList(new LambdaQueryWrapper<Craft>()
                 .eq(Craft::getItemIdId, token.getId()));
         if (Xtool.isNull(craftList)) {
@@ -2839,25 +2989,55 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
         gamePlayerBagMapper.updateById(playerBag);
 
-        // 获得 multiple 个目标物品
-        List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
-                .eq(GamePlayerBag::getItemId, craft.getTargetId())
-                .eq(GamePlayerBag::getUserId, userId)
-                .eq(GamePlayerBag::getIsDelete, "0"));
-        if (Xtool.isNotNull(playerBagList)) {
-            GamePlayerBag bag = playerBagList.get(0);
-            bag.setItemCount(bag.getItemCount() + 1);
-            gamePlayerBagMapper.updateById(bag);
-        } else {
-            GamePlayerBag bag = new GamePlayerBag();
-            bag.setUserId(Integer.parseInt(userId));
-            bag.setItemCount(1);
-            bag.setGridIndex(1);
-            bag.setItemId(craft.getTargetId());
-            gamePlayerBagMapper.insert(bag);
+        if ("4".equals(craft.getTargetType())){
+            Characters characters1 = charactersMapper.listById(userId, craft.getTargetId() + "");
+            if (characters1 != null) {
+                characters1.setStackCount(characters1.getStackCount() + 1);
+                charactersMapper.updateByPrimaryKey(characters1);
+            } else {
+                Card card1 = cardMapper.selectByid(Integer.parseInt(craft.getTargetId() + ""));
+                if (card1 == null) {
+                    baseResp.setErrorMsg("服务器异常联想管理员");
+                    baseResp.setSuccess(0);
+                    return baseResp;
+                }
+                Characters characters = new Characters();
+                characters.setStackCount(0);
+                characters.setId(craft.getTargetId() + "");
+                characters.setLv(1);
+                characters.setUserId(Integer.parseInt(userId));
+                characters.setStar(new BigDecimal(1));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                charactersMapper.insert(characters);
+            }
+        }else {
+            // 获得 multiple 个目标物品
+            List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                    .eq(GamePlayerBag::getItemId, craft.getTargetId())
+                    .eq(GamePlayerBag::getUserId, userId)
+                    .eq(GamePlayerBag::getIsDelete, "0"));
+            if (Xtool.isNotNull(playerBagList)) {
+                GamePlayerBag bag = playerBagList.get(0);
+                bag.setItemCount(bag.getItemCount() + 1);
+                gamePlayerBagMapper.updateById(bag);
+            } else {
+                GamePlayerBag bag = new GamePlayerBag();
+                bag.setUserId(Integer.parseInt(userId));
+                bag.setItemCount(1);
+                bag.setGridIndex(1);
+                bag.setItemId(craft.getTargetId());
+                gamePlayerBagMapper.insert(bag);
+            }
         }
+        List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
+        UserInfo info = new UserInfo();
+        BeanUtils.copyProperties(user, info);
+        info.setCharacterList(formateCharacter(characterList));
+        Map map=new HashMap();
+        map.put("userInfo", info);
+        map.put("itemCount", playerBag.getItemCount());
         baseResp.setSuccess(1);
-        baseResp.setData(playerBag.getItemCount());
+        baseResp.setData(map);
         baseResp.setErrorMsg("成功");
         return baseResp;
     }
@@ -2884,6 +3064,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("请选择合成素材");
             return baseResp;
         }
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
         List<Craft> craftList = craftMapper.selectList(new LambdaQueryWrapper<Craft>()
                 .eq(Craft::getItemIdId, token.getId()));
         if (Xtool.isNull(craftList)) {
@@ -2916,26 +3097,225 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
         gamePlayerBagMapper.updateById(playerBag);
 
-        // 获得 multiple 个目标物品
-        List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
-                .eq(GamePlayerBag::getItemId, craft.getTargetId())
-                .eq(GamePlayerBag::getUserId, userId)
-                .eq(GamePlayerBag::getIsDelete, "0"));
-        if (Xtool.isNotNull(playerBagList)) {
-            GamePlayerBag bag = playerBagList.get(0);
-            bag.setItemCount(bag.getItemCount() + multiple);
-            gamePlayerBagMapper.updateById(bag);
-        } else {
-            GamePlayerBag bag = new GamePlayerBag();
-            bag.setUserId(Integer.parseInt(userId));
-            bag.setItemCount(multiple);
-            bag.setGridIndex(1);
-            bag.setItemId(craft.getTargetId());
-            gamePlayerBagMapper.insert(bag);
+        if ("4".equals(craft.getTargetType())){
+            Characters characters1 = charactersMapper.listById(userId, craft.getTargetId() + "");
+            if (characters1 != null) {
+                characters1.setStackCount(characters1.getStackCount() + multiple);
+                charactersMapper.updateByPrimaryKey(characters1);
+            } else {
+                Card card1 = cardMapper.selectByid(Integer.parseInt(craft.getTargetId() + ""));
+                if (card1 == null) {
+                    baseResp.setErrorMsg("服务器异常联想管理员");
+                    baseResp.setSuccess(0);
+                    return baseResp;
+                }
+                Characters characters = new Characters();
+                characters.setStackCount(multiple-1);
+                characters.setId(craft.getTargetId() + "");
+                characters.setLv(1);
+                characters.setUserId(Integer.parseInt(userId));
+                characters.setStar(new BigDecimal(1));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                charactersMapper.insert(characters);
+            }
+        }else {
+            // 获得 multiple 个目标物品
+            List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                    .eq(GamePlayerBag::getItemId, craft.getTargetId())
+                    .eq(GamePlayerBag::getUserId, userId)
+                    .eq(GamePlayerBag::getIsDelete, "0"));
+            if (Xtool.isNotNull(playerBagList)) {
+                GamePlayerBag bag = playerBagList.get(0);
+                bag.setItemCount(bag.getItemCount() + multiple);
+                gamePlayerBagMapper.updateById(bag);
+            } else {
+                GamePlayerBag bag = new GamePlayerBag();
+                bag.setUserId(Integer.parseInt(userId));
+                bag.setItemCount(multiple);
+                bag.setGridIndex(1);
+                bag.setItemId(craft.getTargetId());
+                gamePlayerBagMapper.insert(bag);
+            }
+        }
+
+        baseResp.setSuccess(1);
+        List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
+        UserInfo info = new UserInfo();
+        BeanUtils.copyProperties(user, info);
+        info.setCharacterList(formateCharacter(characterList));
+        Map map=new HashMap();
+        map.put("userInfo", info);
+        map.put("itemCount", playerBag.getItemCount());
+        baseResp.setData(map);
+        baseResp.setErrorMsg("成功");
+        return baseResp;
+    }
+
+
+    @Override
+    public BaseResp emailManage(TokenDto token, HttpServletRequest request) {
+        String to = token.getStr();
+        BaseResp baseResp = new BaseResp();
+        // 添加 null 和空字符串检查
+        if (to == null || to.trim().isEmpty()) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("邮箱地址不能为空");
+            return baseResp;
+        }
+        if (redisTemplate.hasKey(to)) {
+            Long time = redisTemplate.getExpire(to, TimeUnit.MINUTES);
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg(time + "秒后重新发送邮件");
+            return baseResp;
+        }
+        MailModel mail = new MailModel();
+        int idcode = (int) (Math.random() * 1000000);
+        //内容
+        String content = "<div id=\"contentDiv\" onmouseover=\"getTop().stopPropagation(event);\" onclick=\"getTop().preSwapLink(event, 'html', 'ZC2708-4B3OUiNj8GLWCDFvxBD8Ta5');\" style=\"position:relative;font-size:14px;height:auto;padding:15px 15px 10px 15px;z-index:1;zoom:1;line-height:1.7;\" class=\"body\">    <div id=\"qm_con_body\"><div id=\"mailContentContainer\" class=\"qmbox qm_con_body_content qqmail_webmail_only\" style=\"\">        <style>\n" +
+                "html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{line-height:1.6;font-family:\"Helvetica Neue\",Helvetica,Arial,sans-serif;font-size:16px}body,dd,dl,fieldset,h1,h2,h3,h4,h5,ol,p,textarea,ul{margin:0}button,fieldset,input,legend,textarea{padding:0}button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}ol,ul{padding-left:0;list-style-type:none}a img,fieldset{border:0}a{text-decoration:none}.radius_avatar{display:inline-block;background-color:#FFF;padding:3px;border-radius:50%;-moz-border-radius:50%;-webkit-border-radius:50%;overflow:hidden;vertical-align:middle}.radius_avatar img{display:block;width:100%;height:100%;border-radius:50%;-moz-border-radius:50%;-webkit-border-radius:50%;background-color:#EEE}.btn_app{margin-top:10px;position:relative;display:block;margin-left:auto;margin-right:auto;padding-left:14px;padding-right:14px;-webkit-box-sizing:border-box;box-sizing:border-box;font-size:16px;text-align:center;text-decoration:none;color:#FFF;line-height:2.625;border-radius:5px;-webkit-tap-highlight-color:transparent;overflow:hidden}.btn_app:after{content:\" \";width:200%;height:200%;position:absolute;top:0;left:0;border:1px solid rgba(0,0,0,.2);-webkit-transform:scale(.5);transform:scale(.5);-webkit-transform-origin:0 0;transform-origin:0 0;-webkit-box-sizing:border-box;box-sizing:border-box;border-radius:10px}.btn_app_primary{background-color:#42C642}.btn_app_primary:link,.btn_app_primary:visited{color:#FFF}.btn_app_primary:active{color:rgba(255,255,255,.6)}.btn_app_default{background-color:#F7F7F7;color:#454545}.btn_app_default:link,.btn_app_default:visited{color:#454545}.btn_app_default:active{color:#C9C9C9}.skin_app_default{background-image:url(data:image/png;base64,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);-webkit-background-size:100% auto;background-size:100% auto;background-position:50% 0;background-repeat:no-repeat;background-color:#FFF}body,html{position:relative;height:100%}a,a:link,a:visited{color:#42C642}.mail_area{text-align:center;height:100%;-webkit-box-sizing:border-box;box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center;font-family:\"Helvetica Neue\",\"Hiragino Sans GB\",\"Microsoft YaHei\",\"\\9ED1\\4F53\",Arial,sans-serif}.mail{position:relative;display:inline-block;width:80%;margin-top:-150px;text-align:left}.mail_pc{background-color:#E6E6EA;display:block}.mail_pc .mail{width:850px;margin:45px 0;box-shadow:0 0 25px 5px rgba(0,0,0,.09);-moz-box-shadow:0 0 25px 5px rgba(0,0,0,.09);-webkit-box-shadow:0 0 25px 5px rgba(0,0,0,.09);background-color:#FFF;border-radius:8px;-moz-border-radius:8px;-webkit-border-radius:8px;overflow:hidden}.mail_pc .mail_inner{padding:17% 16% 10%}.mail_pc .mail_msg .btn_app{width:225px}.pic_skin_top{position:absolute;top:0;left:0;width:145px;height:175px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJEAAACvBAMAAAAPhiHNAAAAFVBMVEUAAADY2OLh4eLY2NrX19rX19nb29z1cYcUAAAAB3RSTlMAGgQUEAgMAJvI/gAAAnxJREFUaN7t2MFy0zAUheEzIe46WLLXN4VkbbuQtZPSrkWYslaC4f0fgU07HphGVuN/2fMA3xxdSxolupzlx/xEpbLOh7ySafOlJgkV+ZAzanGlktnnS+lKBVbpQ74UqMVVaajAKq2pStpTlW6wSmuqklpoL2kJbW/pRFUq8i8Bat6doHl7CTq8UdD+rqagG2rc+k6Nu8geN1UpUJU6qpIXVSlQlTpBe6nWZE7QntQSOm9atNCQ9IkaUpE5JGrcgVrbgVpbJ2htlaC11RJzTLwpY09CkE4U9IOCPlPQkoIKDMr4bDuJ+f5flZP9zEM7ZtJxQYzkTYz0ICGSD2KknWmmNBYiJHeQEOnBNFMaHUByl53F4Q2SP6YO+ypb2t3qcrbjHyhpyX05T17RfUp6Vh6PSmaxn3oU3H17/H00TWXbjj8x52Tx63kCc6FN+/JhgUL574L0hF5SznCKf+751cyFjemvdYbEG3NGn2u30+b+tdvv7XV+tonHYX62/9W5bhMsNkPindBkz2a42CZ/E9w+DXdz/2x6+jPcj0g6M98qYzwmlZjUYFLEJKMkJ0qqMGmFST0mGSU5UVKFSQ0mRUwySvKipBKTekwySvKipBKTekwySvKipBKTIiU5UVKFSQ0mGSV5UdIKkwIleVFSiUmBkrwoqcSkQElelNRgklFSLUrqKcmJkkpMCpRUi5J6SnKipA6TjJJKUVKgpEqCpEhJtSgpUlItSoqUVIuSAiVVoiSjpE6Q5IySekFSLUoySuoESV6UFCipEyTVgiRnlBQFSZ0gqRYkeYMkZ4KkIEiKgqSzIOkgSDoLkqIYyQUxkjcx0k5M3EFQTO/JyF9Bt4tB+689SAAAAABJRU5ErkJggg==) no-repeat}.pic_skin_bottom{position:absolute;bottom:0;right:0;width:300px;height:265px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEJBAMAAADcMgfDAAAAFVBMVEUAAADY2OLg4OHZ2dvZ2drY2NvZ2dtyNy61AAAAB3RSTlMAGgUKFhIO15MmpwAABDhJREFUeNrs3EFqG0EYBeHW3zPaF/gAljRoPxpL+wbnAA2S9000vv8REifBkEAgsZEpw9QJPt4BXlpaWlr6XEXyFaczSdaLCWSsPAM2Vj6DjpWvoGPFEXysfcHHiiv4WPuCjxVX8LFyRcjag5B1xMh6QMiKhpAVFSErKkJWVISsqAhZURGyomJkNYysB4ysASOrx8jKGFlRlayGkTVgZK0xsqIoWQ0ja8DIyihZVckaMLIySlZVsgaMrIySNSpZPUpWUbIGjKxAyRqVrIyS1ZSsHiWrKlk9SlZVsjqUrKJkdShZRcnqULKqktWjZFUla42S1ZSsjJI1KlmBkjU4WUXJ6lGympKVUbI2TlZRsjqUrKZkZZSsjZNVlKw1StaoZAVKVu9kjUpWoGR1TlZTsgIlq3OympIVKFm9kzUqWYGS1TtZGyerKFkZJWvlZFUlK1Cyeidr42QVJSujZHVO1uhkFSVrjZK1crKak4WStXayVk7WyB89Xi7P03TYvrabpuf58vixrMJrd5ev0zb9tdid5vMHsTI/+/J0uE//0vY0l9uzuh8rTffpf4ppLrdljXdPh/SWdqfzDVnbd12M1N9ZmnZzMbJeZGclK6U4FiPre6eqZKW0873+/IKlpW/tnM1OwkAUhU+AuHbaadcTja6rTVjzE1gXMK750/d/BMuogRBDJFzgM/Z7gpN7T8/caWamoaGh4e8QNxfl+4ayjJsOXZe78u3lx4Hdj17L64i770ZFhxitnnVJWnHY/A0HdwDmo8lRXEJZ+0CdDtQsyACzQm0Zna9k3b47gWypGpioDX4lax77zgC/tPXUxBmRFXYxtXaGjIPVy3G2eNk8/WcNsFQbZPKKD07WZyrQZH01kCVr20BjvE6gfZ4GjlZ3Bo9v2uJngWer02ebtTMnToInP74J6178BIGi7FXVoniqxkE8VdmzgKpmAqr67h8qGfySd9TBuTzgzvbUzBC3bPfwhax4MIyFoAjrVMierSBT31A1uMAaCnjAbqMKaPehBLS7paqWmd1T1eDWnFwSL91jiuLOBPuoCnY237k5soVTEbMhFTEbsiDgouMLZAunIn6FqYhfoQ8iBmkl4lq400LQbSIfkJFVIf2eC+n3QsR8H4iY75lEzPcKGQ7R77yLV1u/ky7PpcxiBWSxEhGXHc8s1gDprKZYRxULGfAD5mrILFYi5L4iIIfSVBJwKC0Ugb00kQsZpXMJGKWZkOnQQxreB6Thd6MU9IZJgTR8LhF30hXT8PoPhu8wDb9AGr7FTPgOcv7TBDn/tZkjTQcZWpogQ6vNDK0OcizVAtnDVtPDI3hCLjxi9vCG2UOjvcWtangRX0jAeMgkYjwkEjEe4kyD27Z6ScDpIWFaq2JaKyCtlTOt1WNaq0BaK0Y8b0FMJAEXxBjxvJ/ekoCzVowH3lYsxgMvTC3j4QPTTiPJb6EN4gAAAABJRU5ErkJggg==) no-repeat}h1{font-weight:400;position:absolute;right:48px;top:48px;line-height:300px;overflow:hidden;width:314px;height:32px;}.mail_info{padding:1.6em 0 0 56px;margin-top:4.3em;position:relative;border-top:1px #BBBBBD dashed;font-size:15px}.mail_info .radius_avatar{width:40px;height:40px;padding:0;position:absolute;top:1.6em;left:0}.mail_info strong{font-weight:400}.mail_info p{color:#C1C1C3;margin-top:-.05em;font-size:12px}.mail_msg{word-wrap:break-word;word-break:break-all}.mail_msg h2{font-weight:400;font-size:20px;color:#1D1D26;padding:1.34em 0 .6em}.mail_msg p{margin-bottom:24px}.mail_msg .btn_app{margin-top:45px}#app_mail .mail_msg .btn_app,#app_mail .mail_msg .btn_app:link,#app_mail .mail_msg .btn_app:visited{text-decoration:none}\n" +
+                "    </style>\n" +
+                "    \n" +
+                "    <div class=\"mail_area mail_pc\" id=\"app_mail\">\n" +
+                "        <div class=\"mail\">\n" +
+                "            <div class=\"mail_inner\">\n" +
+                "                <h1>YIMEM网技术平台</h1>\n" +
+                "                <div class=\"mail_msg\">\n" +
+                "                    <p>\n" +
+                "                        HI，" + to + " 你好!<br>\n" +
+                "                        感谢您对本站的支持与信赖，下面是您个人账号的激活码。\n" +
+                "                    </p>\n" +
+                "                    <p>\n" +
+                idcode +
+                "                    </p>\n" +
+                "                    <p>\n" +
+                "                        如果这不是你的邮件请忽略，很抱歉打扰你，请原谅。\n" +
+                "                    </p>\n" +
+                "                    <div class=\"mail_info\" ,=\"\" align=\"right\">\n" +
+                "                        <strong>YIMEM团队</strong>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "                <div class=\"pic_skin_top\"></div>\n" +
+                "                <div class=\"pic_skin_bottom\"></div>\n" +
+                "            </div>\n" +
+                "        </div>\n" +
+                "    </div>\n" +
+                "<style type=\"text/css\">.qmbox style, .qmbox script, .qmbox head, .qmbox link, .qmbox meta {display: none !important;}</style></div></div><!-- --><style>#mailContentContainer .txt {height:auto;}</style>  </div>";
+        mail.setContent(content);
+        mail.setToEmails(to);
+        mail.setSubject("YIMEM网站账号激活");
+        baseResp = sendEmail(mail, idcode);
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp getUserMine(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        UserMine userMine = userMineMapper.selectOne(new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, userId));
+        if (userMine == null) {
+            List<MineLevelConfig> mineLevelConfigList = mineLevelConfigMapper.selectList(new LambdaQueryWrapper<MineLevelConfig>().eq(MineLevelConfig::getMineLevel, 1));
+            MineLevelConfig mineLevelConfig = mineLevelConfigList.get(0);
+            userMine = new UserMine();
+            userMine.setUserId(Integer.parseInt(userId));
+            userMine.setMineLevel(mineLevelConfig.getMineLevel());
+            userMine.setHourOutput(mineLevelConfig.getHourOutput());
+            userMine.setMaxCapacity(mineLevelConfig.getMaxCapacity());
+            userMine.setCurrentSilver(0);
+            userMine.setLastCollectTime(new Date());
+            userMine.setMineStatus(0);
+            userMine.setCreateTime(new Date());
+            userMineMapper.insert(userMine);
         }
         baseResp.setSuccess(1);
-        baseResp.setData(playerBag.getItemCount());
-        baseResp.setErrorMsg("成功");
+        baseResp.setData(userMine);
+        return baseResp;
+    }
+
+
+    public BaseResp sendEmail(MailModel mail, Integer idcode) {
+        BaseResp baseResp = new BaseResp();
+        // 建立邮件消息
+        MimeMessage message = javaMailSender.createMimeMessage();
+
+        MimeMessageHelper messageHelper;
+        try {
+            messageHelper = new MimeMessageHelper(message, true, "UTF-8");
+            // 设置发件人邮箱
+            if (mail.getEmailFrom() != null) {
+                messageHelper.setFrom(mail.getEmailFrom());
+            } else {
+                try {
+                    messageHelper.setFrom(new InternetAddress(simpleMailMessage.getFrom(), "YIMEM网管理员", "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // 设置收件人邮箱
+            if (mail.getToEmails() != null) {
+                String[] toEmailArray = mail.getToEmails().split(";");
+                List<String> toEmailList = new ArrayList<String>();
+                if (null == toEmailArray || toEmailArray.length <= 0) {
+                    baseResp.setSuccess(0);
+                    baseResp.setErrorMsg("收件人邮箱不得为空");
+                    return baseResp;
+                } else {
+                    for (String s : toEmailArray) {
+                        if (s != null && !s.equals("")) {
+                            toEmailList.add(s);
+                        }
+                    }
+                    if (null == toEmailList || toEmailList.size() <= 0) {
+                        baseResp.setSuccess(0);
+                        baseResp.setErrorMsg("收件人邮箱不得为空");
+                        return baseResp;
+                    } else {
+                        toEmailArray = new String[toEmailList.size()];
+                        for (int i = 0; i < toEmailList.size(); i++) {
+                            toEmailArray[i] = toEmailList.get(i);
+                        }
+                    }
+                }
+                messageHelper.setTo(toEmailArray);
+            } else {
+                messageHelper.setTo(simpleMailMessage.getTo());
+            }
+
+            // 邮件主题
+            if (mail.getSubject() != null) {
+                messageHelper.setSubject(mail.getSubject());
+            } else {
+
+                messageHelper.setSubject(simpleMailMessage.getSubject());
+            }
+
+            // true 表示启动HTML格式的邮件
+            messageHelper.setText(mail.getContent(), true);
+
+
+            messageHelper.setSentDate(new Date());
+            // 发送邮件
+            javaMailSender.send(message);
+            baseResp.setSuccess(1);
+            baseResp.setErrorMsg("发送成功");
+            ValueOperations opsForValue = redisTemplate.opsForValue();
+            opsForValue.set(mail.getToEmails(), String.valueOf(idcode), 60, TimeUnit.SECONDS);
+        } catch (MessagingException e) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("邮件发送失败: " + e.getMessage());
+            e.printStackTrace();
+        }
         return baseResp;
     }
 
@@ -2961,9 +3341,28 @@ public class GameServiceServiceImpl implements GameServiceService {
         Map map = new HashMap();
         map.put("chongzhi", user.getChongzhi());
         if (user.getShopUpdate() == null || (user.getShopUpdate().compareTo(date2) < 0 && "1".equals(token.getStr()))) {
-            Date date = new Date();
-            user.setShopUpdate(date);
-            map.put("shopUpdate", date.getTime());
+
+//            // 4. 校验并扣减背包物品
+            List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                    .eq(GamePlayerBag::getItemId, 1).eq(GamePlayerBag::getUserId, userId).eq(GamePlayerBag::getIsDelete, "0"));
+            if (Xtool.isNotNull(playerBagList)&&playerBagList.get(0).getItemCount()>0) {
+                GamePlayerBag playerBag = playerBagList.get(0);
+                // 扣减物品数量
+                if (playerBag.getItemCount() - 1 > 0) {
+                    playerBag.setItemCount(playerBag.getItemCount() - 1);
+                } else {
+                    playerBag.setIsDelete("1");
+                }
+                gamePlayerBagMapper.updateById(playerBag);
+
+                // 5. 处理物品使用逻辑（复用之前的封装方法）
+                handleBagItemUse(1, user, userId);
+                map.put("shopUpdate", user.getShopUpdate() != null ? user.getShopUpdate().getTime() : null);
+            }else {
+                Date date = new Date();
+                user.setShopUpdate(date);
+                map.put("shopUpdate", date.getTime());
+            }
             List<GameItemShop> gameItemShopList = gameItemShopMapper.selectAll();
             DynamicItemPicker picker = new DynamicItemPicker();
             for (GameItemShop gameItemShop : gameItemShopList) {
@@ -3858,9 +4257,66 @@ public class GameServiceServiceImpl implements GameServiceService {
                 charactersList.add(characters);
             }
         }
-
+        List<QqCardExp> qqCardExpList = qqCardExpMapper.findAll();
         for (Characters characters : charactersList) {
             Characters characters1 = charactersMapper.listById(token.getUserId(), characters.getId());
+            int cadExp = characters1.getExp(); // 当前溢出经验（超过maxLv的部分）
+            //TODO 判断卡牌是否飞升
+            Card card = cardMapper.selectByid(Integer.parseInt(characters1.getId()));
+
+            // 获取卡牌的初始星级对应的未飞升最大等级
+            int baseMaxLv = CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue());
+
+            // 计算从baseMaxLv+1级到当前等级的经验总和（飞升后多投入的经验）
+            int flyupExp = 0;
+            if (characters1.getLv() > baseMaxLv) {
+                for (int level = baseMaxLv; level < characters1.getLv(); level++) {
+                    int finalLevel = level;
+                    QqCardExp expConfig = qqCardExpList.stream()
+                            .filter(c -> card.getStar().compareTo(new BigDecimal(c.getUpgradeType())) == 0 && c.getLevel() == finalLevel)
+                            .findFirst()
+                            .orElse(null);
+                    if (expConfig != null) {
+                        flyupExp += expConfig.getUpgradeExp();
+                    }
+                }
+            }
+
+            // 总溢出经验 = 飞升后投入的经验 + 当前溢出经验
+            int totalOverflowExp = flyupExp + cadExp;
+            if (totalOverflowExp > 5000) {
+                BigDecimal num = new BigDecimal(totalOverflowExp)
+                        .multiply(new BigDecimal("0.2"))
+                        .divide(BigDecimal.valueOf(5000), 0, RoundingMode.CEILING);
+                // 计算剩余经验
+                // 满级奖励：魂力宝珠（ID:105）
+                Characters characters2 = charactersMapper.listById(userId, "105");
+
+                if (characters2 != null) {
+                    // 已有卡牌 → 叠加
+                    characters2.setStackCount(characters2.getStackCount() + num.intValue());
+                    charactersMapper.updateByPrimaryKey(characters2);
+                } else {
+                    // 没有卡牌 → 新建（这里原来的代码严重错误！已修复）
+                    Card card2 = cardMapper.selectByid(105);
+                    if (card2 == null) {
+                        baseResp.setErrorMsg("服务器异常，请联系管理员");
+                        baseResp.setSuccess(0);
+                        return baseResp;
+                    }
+                    Characters newChar = new Characters();
+                    newChar.setId("105");
+                    newChar.setLv(1);
+                    newChar.setUserId(Integer.parseInt(userId));
+                    newChar.setStar(BigDecimal.ONE);
+                    newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card2.getName(), card2.getStar().doubleValue()));
+
+                    // 计算数量（修复null指针核心）
+                    newChar.setStackCount(num.intValue() - 1); // 用newChar 不是 characters1！
+
+                    charactersMapper.insert(newChar);
+                }
+            }
             if (characters1.getStackCount() - 1 >= 0) {
                 characters1.setStackCount(characters1.getStackCount() - 1);
                 characters1.setLv(1);
@@ -4563,19 +5019,17 @@ public class GameServiceServiceImpl implements GameServiceService {
         // 3. 筛选符合用户领取规则的礼包
         List<DailyListItemVO> result = new ArrayList<>();
         for (DailyView gift : validGifts) {
-            Long giftId = gift.getGiftId();
+            String giftCode = gift.getGiftCode();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String today = sdf.format(new Date());
 
             // 3.3 封装礼包信息（含内容）
             DailyListItemVO vo = convertToVO(gift);
-            // 3.1 校验用户是否已达领取上限
-            Map map = new HashMap();
-            map.put("user_id", userId);
-            map.put("gift_id", giftId);
-            map.put("get_time", today);
-            map.put("status", 1);
-            List<DailyViewRecord> list = dailyViewRecordMapper.selectByMap(map);
+            List<DailyViewRecord> list = dailyViewRecordMapper.selectList(new LambdaQueryWrapper<DailyViewRecord>()
+                    .eq(DailyViewRecord::getUserId,userId)
+                    .eq(DailyViewRecord::getGiftCode,giftCode)
+                    .eq(DailyViewRecord::getGetTime, today)
+                    .eq(DailyViewRecord::getStatus, 1));
             if (Xtool.isNotNull(list)) {
                 vo.setIsFinsh("1");
                 finish++;
@@ -4596,18 +5050,26 @@ public class GameServiceServiceImpl implements GameServiceService {
             rate = (double) finish / validGifts.size() * 100;
         }
         // 区间映射
-        if (rate <= 0) {
+        if (rate < 25) {
             map.put("rate", 0);
-        } else if (rate < 40) {
-            map.put("rate", 20);
-        } else if (rate < 60) {
+        } else if (rate < 50) {
+            map.put("rate", 25);
+        } else if (rate < 75) {
             map.put("rate", 50);
-        } else if (rate < 85) {
-            map.put("rate", 70);
+        } else if (rate < 100) {
+            map.put("rate", 75);
         } else {
             map.put("rate", 100);
         }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String today = sdf.format(new Date());
+        Map map3 = new HashMap();
+        map3.put("user_id", userId);
+        map3.put("get_time", today);
+        map3.put("status", 1);
+        List<LivelyGiftRecord> list = livelyGiftRecordMapper.selectByMap(map3);
         baseResp.setSuccess(1);
+        map.put("record", list);
         map.put("dailyViewList", result);
         baseResp.setData(map);
         return baseResp;
@@ -5113,6 +5575,17 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        // 1. 先自然恢复
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
         if (user.getHuoliCount() - 10 < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("活力不足");
@@ -5171,76 +5644,135 @@ public class GameServiceServiceImpl implements GameServiceService {
                 userMapper.updateuser(user1);
             }
         }
-        user.setHuoliCount(user.getHuoliCount() - 10);
+        //保证离线玩家
+        saveBattleLogToFile(battle.getId(), JsonUtils.toJson(battle.getJson()));
+        StaminaUtil.StaminaItem huoliRes = StaminaUtil.useHuoliPotion(user.getHuoliCount(), user.getHuoliCountTime(), -10);
+        user.setHuoliCount(huoliRes.getCount());
+        user.setHuoliCountTime(huoliRes.getCountTime());
         userMapper.updateuser(user);
-        baseResp.setData(battle);
+        Map map = new HashMap();
+        map.put("user", user);
+        map.put("battle", battle);
+        baseResp.setData(map);
         dailyViewFinsh(userId, "jinjichang_code");
         return baseResp;
     }
 
     @Override
-    public BaseResp blessing(TokenDto token, HttpServletRequest request) throws Exception {
-        //先获取当前用户战队
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp blessing(TokenDto token, HttpServletRequest request) throws ParseException {
         BaseResp baseResp = new BaseResp();
-        if (token == null || Xtool.isNull(token.getToken())) {
+        LocalDate today = LocalDate.now();
+
+        // 全量参数校验
+        if (token == null
+                || Xtool.isNull(token.getToken())
+                || Xtool.isNull(token.getUserId())
+                || Xtool.isNull(token.getId())) {
             baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
+            baseResp.setErrorMsg("登录过期或参数缺失");
             return baseResp;
         }
-        String userId = token.getUserId();
-        if (Xtool.isNull(userId)) {
+
+        String userIdStr = token.getUserId();
+        Integer senderId;
+        Integer receiverId;
+        try {
+            senderId = Integer.parseInt(userIdStr);
+            receiverId = Integer.parseInt(token.getId());
+        } catch (NumberFormatException e) {
             baseResp.setSuccess(0);
-            baseResp.setErrorMsg("登录过期");
+            baseResp.setErrorMsg("参数非法");
             return baseResp;
         }
-        Map map = new HashMap();
-        map.put("receiver_id", token.getId());
-        LocalDate currentDate = LocalDate.now();
-        String dateStr = currentDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        map.put("send_time", dateStr);
-        //先判断是否
-        List<FriendBlessing> friendBlessings = friendBlessingMapper.selectByMap(map);
-        if (friendBlessings.size() >= 50) {
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg("对面祝福已满");
-            return baseResp;
-        }
-        Map map2 = new HashMap();
-        map2.put("sender_id", userId);
-        map2.put("send_time", dateStr);
-        //先判断是否
-        List<FriendBlessing> friendBlessings2 = friendBlessingMapper.selectByMap(map2);
-        if (friendBlessings2.size() >= 15) {
+
+        // ====================== 单机悲观锁核心：锁住当前用户今日所有祝福记录 ======================
+        // 事务内FOR UPDATE，其他同用户并发请求会阻塞，串行校验次数，不会击穿15次上限
+        List<FriendBlessing> todaySendList = friendBlessingMapper.listTodaySendLock(senderId, today);
+        long sendCount = todaySendList.size();
+        if (sendCount >= 15) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("今日15次祝福已送完");
             return baseResp;
         }
-        map2.put("receiver_id", token.getId());
-        //先判断是否
-        List<FriendBlessing> friendBlessings3 = friendBlessingMapper.selectByMap(map2);
-        if (Xtool.isNotNull(friendBlessings3)) {
+        List<FriendBlessing> blessingList = todaySendList.stream().filter(x -> x.getReceiverId().equals(receiverId)).collect(Collectors.toList());
+        if (Xtool.isNotNull(blessingList)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("今日已送祝福");
+            return baseResp;
+        }
+
+        // 校验接收方50条上限（无锁，读不影响，上限击穿有唯一索引兜底）
+        long receiveCount = friendBlessingMapper.countTodayReceive(receiverId, today);
+        if (receiveCount >= 50) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("对面祝福已满");
+            return baseResp;
+        }
+
+        // 组装祝福数据
+        FriendBlessing friendBlessing = new FriendBlessing();
+        friendBlessing.setIsRead(0);
+        friendBlessing.setContent("好友祝福");
+        friendBlessing.setReceiverId(receiverId);
+        friendBlessing.setSenderId(senderId);
+        friendBlessing.setSendTime(new Date());
+
+        try {
+            friendBlessingMapper.insert(friendBlessing);
+        } catch (DuplicateKeyException e) {
+            // 唯一索引冲突 = 同一天已祝福过该玩家
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("请勿重复祝福");
             return baseResp;
         }
-        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
-        user.setHuoliCount(user.getHuoliCount() + 10);
-        user.setTiliCount(user.getTiliCount() + 10);
+
+        // 查询玩家，刷新离线体力活力
+        User user = userMapper.selectUserByUserId(senderId);
+        if (user == null) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("用户不存在");
+            return baseResp;
+        }
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
+
+        // 增加体力、活力（建议把useTiliPotion改名为addTiliPotion）
+        StaminaUtil.StaminaItem tiliAdd = StaminaUtil.useTiliPotion(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                10
+        );
+        StaminaUtil.StaminaItem huoliAdd = StaminaUtil.useHuoliPotion(
+                user.getHuoliCount(),
+                user.getHuoliCountTime(),
+                10
+        );
+        user.setTiliCount(tiliAdd.getCount());
+        user.setTiliCountTime(tiliAdd.getCountTime());
+        user.setHuoliCount(huoliAdd.getCount());
+        user.setHuoliCountTime(huoliAdd.getCountTime());
+
+        // 更新玩家资源
         userMapper.updateuser(user);
-        FriendBlessing friendBlessing = new FriendBlessing();
-        friendBlessing.setIsRead(0);
-        friendBlessing.setContent("好友祝福");
-        friendBlessing.setReceiverId(Integer.parseInt(token.getId()));
-        friendBlessing.setSenderId(Integer.parseInt(userId));
-        friendBlessing.setSendTime(new Date());
-        friendBlessingMapper.insert(friendBlessing);
-        User user1 = userMapper.selectUserByUserId(Integer.parseInt(userId));
+
+        // 返回数据
         UserInfo userInfo = new UserInfo();
-        BeanUtils.copyProperties(user1, userInfo);
+        BeanUtils.copyProperties(user, userInfo);
         baseResp.setSuccess(1);
         baseResp.setData(userInfo);
         baseResp.setErrorMsg("仙缘祝福已送达！\n 仙友已经收到你的心意～\n 体力 + 10、活力 + 10 \n 已注入你的仙躯，可继续闯荡三界！");
-        dailyViewFinsh(userId, "zhufu_code");
+
+        dailyViewFinsh(userIdStr, "zhufu_code");
         return baseResp;
     }
 
@@ -5300,6 +5832,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("登录过期");
             return baseResp;
         }
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user1.getTiliCount(),
+                user1.getTiliCountTime(),
+                user1.getHuoliCount(),
+                user1.getHuoliCountTime()
+        );
         Map map2 = new HashMap();
         LocalDate currentDate = LocalDate.now();
         String dateStr = currentDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
@@ -5318,16 +5856,32 @@ public class GameServiceServiceImpl implements GameServiceService {
             friendBlessingMapper.updateById(friendBlessing);
         }
         //判断凝聚点是否正常
-        user1.setTiliCount(token.getTiLi() + f.size() * 2);
-        user1.setTiliCountTime(new Date());
-        user1.setHuoliCount(token.getHuoLi() + f.size() * 2);
-        user1.setHuoliCountTime(new Date());
+        int blessCount = f.size() * 2;
+        
+        // 使用通用方法增加体力
+        StaminaUtil.StaminaItem tiliAdd = StaminaUtil.useTiliPotion(
+                user1.getTiliCount(),
+                user1.getTiliCountTime(),
+                blessCount
+        );
+        user1.setTiliCount(tiliAdd.getCount());
+        user1.setTiliCountTime(tiliAdd.getCountTime());
+        
+        // 使用通用方法增加活力
+        StaminaUtil.StaminaItem huoliAdd = StaminaUtil.useHuoliPotion(
+                user1.getHuoliCount(),
+                user1.getHuoliCountTime(),
+                blessCount
+        );
+        user1.setHuoliCount(huoliAdd.getCount());
+        user1.setTiliCountTime(refresh.getTiliCountTime());
+        user1.setHuoliCountTime(huoliAdd.getCountTime());
+        user1.setHuoliCountTime(refresh.getHuoliCountTime());
         userMapper.updateuser(user1);
-        Map map = new HashMap();
-        map.put("tiLi", token.getTiLi() + f.size() * 2);
-        map.put("huoLi", token.getHuoLi() + f.size() * 2);
+        UserInfo userInfo = new UserInfo();
+        BeanUtils.copyProperties(user1, userInfo);
         baseResp.setSuccess(1);
-        baseResp.setData(map);
+        baseResp.setData(userInfo);
         baseResp.setErrorMsg("凝聚成功");
         return baseResp;
     }
@@ -5342,11 +5896,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
 //        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
-//        if (Xtool.isNull(userId)) {
-//            baseResp.setSuccess(0);
-//            baseResp.setErrorMsg("登录过期");
-//            return baseResp;
-//        }
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
         User user = userMapper.selectUserByUserId(Integer.parseInt(token.getUserId()));
         //自己的战队
         List<Characters> leftCharacter = charactersMapper.goIntoListById(user.getUserId() + "");
@@ -5378,6 +5933,8 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
         baseResp.setSuccess(1);
         Battle battle = this.battle(leftCharacter, user.getUserId(), user.getNickname(), rightCharacter, user1.getUserId(), user1.getNickname(), user.getGameImg(), "3");
+        //保证离线玩家
+        saveBattleLogToFile(battle.getId(), JsonUtils.toJson(battle.getJson()));
         baseResp.setData(battle);
         dailyViewFinsh(user.getUserId() + "", "qiecuo_code");
         return baseResp;
@@ -5732,7 +6289,18 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("用户不存在");
             return baseResp;
         }
-
+// 打开面板，先把所有离线/挂机恢复一次性算完
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
+// 之后展示面板数值
         // 3. 分布式锁实现（适配基础版setIfAbsent）
         String lockKey = "USE_BAG_ITEM_" + userId + "_" + itemId;
 //        Boolean lockSuccess = false;
@@ -5906,10 +6474,24 @@ public class GameServiceServiceImpl implements GameServiceService {
                 user.setGoldentower(1);
                 break;
             case 2: // 活力药水
-                user.setHuoliCount(user.getHuoliCount() + 100);
+                StaminaUtil.StaminaItem huoliRes = StaminaUtil.useHuoliPotion(
+                        user.getHuoliCount(),
+                        user.getHuoliCountTime(),
+                        +100 //
+                );
+                user.setHuoliCount(huoliRes.getCount());
+                user.setHuoliCountTime(huoliRes.getCountTime());
                 break;
             case 3: // 体力药水
-                user.setTiliCount(user.getTiliCount() + 100);
+                // 直接扣体力，不碰时间戳
+                StaminaUtil.StaminaItem tiliRes = StaminaUtil.useTiliPotion(
+                        user.getTiliCount(),
+                        user.getTiliCountTime(),
+                        +100 //
+                );
+                user.setTiliCount(tiliRes.getCount());
+                user.setTiliCountTime(tiliRes.getCountTime());
+                // 直接存库，不用算恢复
                 break;
             case 4: // 体活力补给包
                 addBagItem(userId, 1, 2); // 刷新券+2
@@ -6134,7 +6716,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             pveReward.setRewardType("1");
             pveRewards.add(pveReward);
         }
-
+        int count = 0;
+        // 循环 100 层
+        for (int i = 0; i < 100; i++) {
+            // 每层判断是否触发 20% 概率
+            if (ProbabilityBooleanUtils.randomByProbability(0.2)) {
+                count++;
+            }
+        }
         if ("bronzetower".equals(token.getStr())) {
             user.setBronze1(101);
             PveReward pveReward = new PveReward();
@@ -6145,6 +6734,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             pveReward.setRewardAmount(2000);
             pveReward.setRewardType("6");
             pveRewards.add(pveReward);
+            if (count > 0) {
+                PveReward pveReward2 = new PveReward();
+                pveReward2.setItemId(17000107);
+                pveReward2.setRewardAmount(count);
+                pveReward2.setRewardType("7");
+                pveReward2.setItemName("下级铸魂石");
+                pveRewards.add(pveReward2);
+            }
             dailyViewFinsh(userId, "qingtong_code");
         }
         if ("silvertower".equals(token.getStr())) {
@@ -6157,6 +6754,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             pveReward.setRewardAmount(1000);
             pveReward.setRewardType("6");
             pveRewards.add(pveReward);
+            if (count > 0) {
+                PveReward pveReward2 = new PveReward();
+                pveReward2.setItemId(17000108);
+                pveReward2.setRewardAmount(count);
+                pveReward2.setItemName("中级铸魂石");
+                pveReward2.setRewardType("7");
+                pveRewards.add(pveReward2);
+            }
             dailyViewFinsh(userId, "baiying_code");
         }
         if ("goldentower".equals(token.getStr())) {
@@ -6169,6 +6774,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             pveReward.setRewardAmount(500);
             pveReward.setRewardType("6");
             pveRewards.add(pveReward);
+            if (count > 0) {
+                PveReward pveReward2 = new PveReward();
+                pveReward2.setItemId(17000109);
+                pveReward2.setRewardAmount(count);
+                pveReward2.setItemName("高级铸魂石");
+                pveReward2.setRewardType("7");
+                pveRewards.add(pveReward2);
+            }
             dailyViewFinsh(userId, "huanjing_code");
         }
         for (PveReward content : pveRewards) {
@@ -6218,6 +6831,27 @@ public class GameServiceServiceImpl implements GameServiceService {
                     playerBag.setItemId(content.getItemId());
                     gamePlayerBagMapper.insert(playerBag);
                 }
+            } else if ("7".equals(content.getRewardType() + "")) {
+                EqCharacters characters1 = eqCharactersMapper.listById2(userId, content.getItemId() + "");
+                if (characters1 != null) {
+                    characters1.setStackCount(characters1.getStackCount() + content.getRewardAmount());
+                    eqCharactersMapper.updateByPrimaryKey(characters1);
+                } else {
+                    EqCard card = eqCardMapper.selectByid(content.getItemId() + "");
+                    if (card == null) {
+                        baseResp.setErrorMsg("服务器异常联想管理员");
+                        baseResp.setSuccess(0);
+                        return baseResp;
+                    }
+                    EqCharacters characters = new EqCharacters();
+                    characters.setStackCount(content.getRewardAmount() - 1);
+                    characters.setId(content.getItemId() + "");
+                    characters.setLv(1);
+                    characters.setUserId(Integer.parseInt(userId));
+                    characters.setStar(new BigDecimal(1));
+                    characters.setMaxLv(1);
+                    eqCharactersMapper.insert(characters);
+                }
             }
         }
         map.put("rewards", pveRewards);
@@ -6245,6 +6879,8 @@ public class GameServiceServiceImpl implements GameServiceService {
         if (playerBag3 != null) {
             info.setCrystal(playerBag3.getItemCount());
         }
+        List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(info.getUserId());
+        info.setEqCharactersList(eqCharactersList);
         map.put("user", info);
         baseResp.setData(map);
         baseResp.setSuccess(1);
@@ -6519,6 +7155,17 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        // 1. 先自然恢复
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
         if (user.getTiliCount() - 2 < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("体力不足");
@@ -6741,6 +7388,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     if (Xtool.isNotNull(pveRewardsAll3)) {
                         PveRewardRecord pveRewardRecord = new PveRewardRecord();
                         BeanUtils.copyProperties(pveRewardsAll3.get(0), pveRewardRecord);
+                        pveRewardRecord.setId(null);
                         pveRewardRecord.setUserId(Integer.parseInt(userId));
                         pveRewardRecordMapper.insert(pveRewardRecord);
                     }
@@ -6807,7 +7455,15 @@ public class GameServiceServiceImpl implements GameServiceService {
         } else {
             battle.setChapter(token.getStr());
         }
-        user.setTiliCount(user.getTiliCount() - 2);
+        // 直接扣体力，不碰时间戳
+        StaminaUtil.StaminaItem tiliRes = StaminaUtil.useTiliPotion(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                -2 // 消耗10点
+        );
+        user.setTiliCount(tiliRes.getCount());
+        user.setTiliCountTime(tiliRes.getCountTime());
+// 直接存库，不用算恢复
         PveDetail pveDetail2 = pveDetailMapper.selectById(battle.getChapter());
         Map map2 = new HashMap();
         map2.put("detail_code", battle.getChapter());
@@ -7081,6 +7737,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     pveRewardsAll.add(pveRewardsAll3.get(0));
                     PveRewardRecord pveRewardRecord = new PveRewardRecord();
                     BeanUtils.copyProperties(pveRewardsAll3.get(0), pveRewardRecord);
+                    pveRewardRecord.setId(null);
                     pveRewardRecord.setUserId(Integer.parseInt(userId));
                     pveRewardRecordMapper.insert(pveRewardRecord);
                 }
@@ -7622,6 +8279,8 @@ public class GameServiceServiceImpl implements GameServiceService {
             User user2 = userMapper.selectUserByUserId(Integer.parseInt(userId));
             UserInfo info = new UserInfo();
             BeanUtils.copyProperties(user2, info);
+            List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(info.getUserId());
+            info.setEqCharactersList(eqCharactersList);
             info.setBronze(0);
             info.setDarkSteel(0);
             info.setPurpleGold(0);
@@ -7761,6 +8420,18 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        // 打开面板，先把所有离线/挂机恢复一次性算完
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
+// 之后展示面板数值
         if (user.getHuoliCount() - 30 < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("活力不足");
@@ -7834,6 +8505,8 @@ public class GameServiceServiceImpl implements GameServiceService {
                 gameArenaSignup.setArenaScore(0);
             }
         }
+        //保证离线玩家
+        saveBattleLogToFile(battle.getId(), JsonUtils.toJson(battle.getJson()));
         gameArenaSignupMapper.updateById(gameArenaSignup);
         user.setGold(user.getGold().add(new BigDecimal(5460)));
         GameArenaBattle gameArenaBattle1 = new GameArenaBattle();
@@ -7850,7 +8523,13 @@ public class GameServiceServiceImpl implements GameServiceService {
         gameArenaBattle1.setToUserName(gameArenaSignup2.getUserName());
         gameArenaBattleMapper.insert(gameArenaBattle1);
         gameArenaSignup.setCount(gameArenaSignup.getCount() - 1);
-        user.setHuoliCount(user.getHuoliCount() - 30);
+        StaminaUtil.StaminaItem huoliRes = StaminaUtil.useHuoliPotion(
+                user.getHuoliCount(),
+                user.getHuoliCountTime(),
+                -30
+        );
+        user.setHuoliCount(huoliRes.getCount());
+        user.setHuoliCountTime(huoliRes.getCountTime());
         user.setArenaCount(user.getArenaCount() - 1);
         userMapper.updateuser(user);
         UserInfo userInfo = new UserInfo();
@@ -7899,6 +8578,18 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        // 打开面板，先把所有离线/挂机恢复一次性算完
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
+// 之后展示面板数值
         if (user.getHuoliCount() - 10 < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("活力不足");
@@ -8033,11 +8724,19 @@ public class GameServiceServiceImpl implements GameServiceService {
                 }
             }
         }
+        //抢夺保证离线玩家
+        saveBattleLogToFile(battle.getId(), JsonUtils.toJson(battle.getJson()));
 
         Map map = new HashMap();
         map.put("rewards", pveRewards);
         user.setDuoCount(user.getDuoCount() - 1);
-        user.setHuoliCount(user.getHuoliCount() - 10);
+        StaminaUtil.StaminaItem huoliRes = StaminaUtil.useHuoliPotion(
+                user.getHuoliCount(),
+                user.getHuoliCountTime(),
+                -10 //
+        );
+        user.setHuoliCount(huoliRes.getCount());
+        user.setHuoliCountTime(huoliRes.getCountTime());
         userMapper.updateuser(user);
         UserInfo userInfo = new UserInfo();
         BeanUtils.copyProperties(user, userInfo);
@@ -8316,6 +9015,33 @@ public class GameServiceServiceImpl implements GameServiceService {
     }
 
     @Override
+    public BaseResp kuanList(TokenDto token, HttpServletRequest request) throws Exception {
+        //先获取当前用户战队
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        //随机获取有队伍的5个人
+        List<UserMine> infos = userMapper.SelectUserKuanItemId(token.getId(), userId);
+        baseResp.setSuccess(1);
+        Map map = new HashMap();
+        map.put("user", infos);
+        map.put("duoCount", user.getDuoCount());
+        baseResp.setData(map);
+        return baseResp;
+    }
+
+    @Override
     public BaseResp friendAllList(TokenDto token, HttpServletRequest request) throws Exception {
         //先获取当前用户战队
         BaseResp baseResp = new BaseResp();
@@ -8456,21 +9182,61 @@ public class GameServiceServiceImpl implements GameServiceService {
 
     @Override
     public BaseResp playBattle(TokenDto token, HttpServletRequest request) throws Exception {
-        GameFight gameFight = gameFightMapper.selectByPrimaryKey(token.getId());
         BaseResp baseResp = new BaseResp();
-        baseResp.setData(JsonUtils.fromJsonToObjList(gameFight.getFightter()));
+        String battleId = token.getId();
+
+        // 从本地文件读取完整战斗过程JSON
+        String json = readBattleLogFromFile(battleId);
+        if (Xtool.isNull(json)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("战斗记录不存在或已过期");
+            return baseResp;
+        }
+
+        baseResp.setData(JsonUtils.fromJsonToObjList(json));
         baseResp.setSuccess(1);
         return baseResp;
     }
 
     public BaseResp warReport(TokenDto token, HttpServletRequest request) throws Exception {
-        List<GameFight> list = gameFightMapper.selectAll(token.getUserId());
-        list.stream().map(x -> {
-            x.setTimeStr(formatTime(x.getCreatetime()));
-            return x;
-        }).collect(Collectors.toList());
         BaseResp baseResp = new BaseResp();
-        baseResp.setData(list);
+        String userId = token.getUserId();
+
+        // 从Redis扫描获取该用户的所有战斗摘要
+        Set<String> keys = redisTemplate.keys("battle:summary:*");
+        List<Map<String, Object>> warReportList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(keys)) {
+            for (String key : keys) {
+                String summaryJson = (String) redisTemplate.opsForValue().get(key);
+                if (Xtool.isNotNull(summaryJson)) {
+                    Object obj = JsonUtils.fromJsonToObjList(summaryJson);
+                    if (obj instanceof Map) {
+                        Map<String, Object> summary = (Map<String, Object>) obj;
+                        // 只返回当前用户的战斗记录
+                        if (userId.equals(String.valueOf(summary.get("userId"))) ||
+                                userId.equals(String.valueOf(summary.get("toUserId")))) {
+                            // 添加格式化时间
+                            Long timestamp = (Long) summary.get("timestamp");
+                            if (timestamp != null) {
+                                Date createTime = new Date(timestamp);
+                                summary.put("timeStr", formatTime(createTime));
+                            }
+                            warReportList.add(summary);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 按时间戳降序排序（最新的在前）
+        warReportList.sort((a, b) -> {
+            Long timeA = (Long) a.get("timestamp");
+            Long timeB = (Long) b.get("timestamp");
+            return timeB.compareTo(timeA);
+        });
+
+        baseResp.setData(warReportList);
         baseResp.setSuccess(1);
         return baseResp;
     }
@@ -8603,10 +9369,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                         }
                         if (Xtool.isNotNull(characters.getCollAttack())) {
-                            character.setAttack(attack.intValue() + skillLevel[3] * characters.getCollAttack());
+                            character.setAttack(character.getAttack() + skillLevel[3] * characters.getCollAttack());
                         }
                         if (Xtool.isNotNull(characters.getCollSpeed())) {
-                            character.setSpeed(speed.intValue() + skillLevel[3] * characters.getCollSpeed());
+                            character.setSpeed(character.getSpeed() + skillLevel[3] * characters.getCollSpeed());
                         }
                         //TODO 协同属性加成
                         character.setWlAtk(character.getWlAtk() + characters.getWlAtk() * skillLevel[3]);
@@ -8635,10 +9401,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                 }
                 if (Xtool.isNotNull(characters.getCollAttack())) {
-                    character.setAttack(attack.intValue() + skillLevel[1] * characters.getCollAttack());
+                    character.setAttack(character.getAttack() + skillLevel[1] * characters.getCollAttack());
                 }
                 if (Xtool.isNotNull(characters.getCollSpeed())) {
-                    character.setSpeed(speed.intValue() + skillLevel[1] * characters.getCollSpeed());
+                    character.setSpeed(character.getSpeed() + skillLevel[1] * characters.getCollSpeed());
                 }
             }
 
@@ -8653,10 +9419,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                 }
                 if (Xtool.isNotNull(characters.getCollAttack())) {
-                    character.setAttack(attack.intValue() + skillLevel[1] * characters.getCollAttack());
+                    character.setAttack(character.getAttack() + skillLevel[1] * characters.getCollAttack());
                 }
                 if (Xtool.isNotNull(characters.getCollSpeed())) {
-                    character.setSpeed(speed.intValue() + skillLevel[1] * characters.getCollSpeed());
+                    character.setSpeed(character.getSpeed() + skillLevel[1] * characters.getCollSpeed());
                 }
                 //瑶池仙女物理抗性
                 if (characters.getName().equals("瑶池仙女")) {
@@ -8674,10 +9440,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                 }
                 if (Xtool.isNotNull(characters.getCollAttack())) {
-                    character.setAttack(attack.intValue() + skillLevel[1] * characters.getCollAttack());
+                    character.setAttack(character.getAttack() + skillLevel[1] * characters.getCollAttack());
                 }
                 if (Xtool.isNotNull(characters.getCollSpeed())) {
-                    character.setSpeed(speed.intValue() + skillLevel[1] * characters.getCollSpeed());
+                    character.setSpeed(character.getSpeed() + skillLevel[1] * characters.getCollSpeed());
                 }
             }
         }
@@ -8691,10 +9457,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                 }
                 if (Xtool.isNotNull(characters.getCollAttack())) {
-                    character.setAttack(attack.intValue() + skillLevel[1] * characters.getCollAttack());
+                    character.setAttack(character.getAttack() + skillLevel[1] * characters.getCollAttack());
                 }
                 if (Xtool.isNotNull(characters.getCollSpeed())) {
-                    character.setSpeed(speed.intValue() + skillLevel[1] * characters.getCollSpeed());
+                    character.setSpeed(character.getSpeed() + skillLevel[1] * characters.getCollSpeed());
                 }
             }
 
@@ -8709,10 +9475,10 @@ public class GameServiceServiceImpl implements GameServiceService {
 
                 }
                 if (Xtool.isNotNull(characters.getCollAttack())) {
-                    character.setAttack(attack.intValue() + skillLevel[1] * characters.getCollAttack());
+                    character.setAttack(character.getAttack() + skillLevel[1] * characters.getCollAttack());
                 }
                 if (Xtool.isNotNull(characters.getCollSpeed())) {
-                    character.setSpeed(speed.intValue() + skillLevel[1] * characters.getCollSpeed());
+                    character.setSpeed(character.getSpeed() + skillLevel[1] * characters.getCollSpeed());
                 }
             }
 
@@ -8956,22 +9722,31 @@ public class GameServiceServiceImpl implements GameServiceService {
         map.put("name0", name0);
         map.put("name1", name1);
         map.put("isWin", isWin);
-        GameFight fight = new GameFight();
-        fight.setId(battleId);
-        fight.setToUserId(toUserId);
-        fight.setUserId(userId);
-        fight.setToUserName(name1);
-        fight.setUserName(name0);
-        fight.setIsWin(isWin);
-        fight.setType(type);
-        fight.setImg(img);
-        //将map转json存储
-        String json = JsonUtils.toJson(map);
-        fight.setFightter(json);
-        gameFightMapper.insert(fight);
+
+        // 将完整战斗过程JSON存储到本地磁盘文件
+//        String json = JsonUtils.toJson(map);
+//        saveBattleLogToFile(battleId, json);
+
+        // 提取战斗摘要信息存储到Redis
+        Map<String, Object> battleSummary = new HashMap<>();
+        battleSummary.put("battleId", battleId);
+        battleSummary.put("userId", userId);
+        battleSummary.put("toUserId", toUserId);
+        battleSummary.put("userName", name0);
+        battleSummary.put("toUserName", name1);
+        battleSummary.put("isWin", isWin);
+        battleSummary.put("type", type);
+        battleSummary.put("img", img);
+        battleSummary.put("timestamp", System.currentTimeMillis());
+
+        String summaryJson = JsonUtils.toJson(battleSummary);
+        redisTemplate.opsForValue().set("battle:summary:" + battleId, summaryJson, 7, TimeUnit.DAYS);
+
+        // 战斗数据不再存储到数据库，仅存储到Redis和本地文件
         Battle bt = new Battle();
         bt.setIsWin(isWin);
-        bt.setId(fight.getId());
+        bt.setId(battleId);
+        bt.setJson(map);
         return bt;
     }
 
@@ -9084,6 +9859,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         for (Characters characters : leftCharacter) {
             GameArenaBattlecharacters battlecharacters = new GameArenaBattlecharacters();
             BeanUtils.copyProperties(characters, battlecharacters);
+            battlecharacters.setUuid(null);
             battlecharacters.setWeekNum(arenaWeek);
             battlecharacters.setArenaLevel(token.getFinalLevel() + "");
             battlecharacters.setCreateTime(new Date());
@@ -9093,6 +9869,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             Characters characters = charactersMapper.listById(userId, token.getStr());
             GameArenaBattlecharacters battlecharacters = new GameArenaBattlecharacters();
             BeanUtils.copyProperties(characters, battlecharacters);
+            battlecharacters.setUuid(null);
             battlecharacters.setWeekNum(arenaWeek);
             battlecharacters.setGoIntoNum(6);
             battlecharacters.setArenaLevel(token.getFinalLevel() + "");
@@ -9104,6 +9881,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             Characters characters = charactersMapper.listById(userId, token.getId());
             GameArenaBattlecharacters battlecharacters = new GameArenaBattlecharacters();
             BeanUtils.copyProperties(characters, battlecharacters);
+            battlecharacters.setUuid(null);
             battlecharacters.setWeekNum(arenaWeek);
             battlecharacters.setGoIntoNum(7);
             battlecharacters.setArenaLevel(token.getFinalLevel() + "");
@@ -10368,135 +11146,346 @@ public class GameServiceServiceImpl implements GameServiceService {
 
     }
 
-    @Override
-    public BaseResp emailManage(TokenDto token, HttpServletRequest request) {
-        String to = token.getStr();
+    /**
+     * 将战斗日志JSON保存到本地磁盘文件
+     *
+     * @param battleId 战斗ID
+     * @param json     战斗过程JSON数据
+     */
+    private void saveBattleLogToFile(String battleId, String json) {
+        try {
+            // 定义日志文件存储目录
+            String logDir = "logs/battle/";
+            File dir = new File(logDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 以battleId为文件名，生成JSON文件
+            String fileName = logDir + battleId + ".json";
+            File file = new File(fileName);
+
+            // 写入JSON数据到文件
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(json);
+                writer.flush();
+            }
+
+            log.info("战斗日志已保存到文件: {}", fileName);
+        } catch (IOException e) {
+            log.error("保存战斗日志文件失败，battleId: {}", battleId, e);
+        }
+    }
+
+    /**
+     * 从本地磁盘文件读取战斗日志JSON
+     *
+     * @param battleId 战斗ID
+     * @return 战斗过程JSON数据，如果文件不存在则返回null
+     */
+    private String readBattleLogFromFile(String battleId) {
+        try {
+            // 定义日志文件存储目录
+            String logDir = "logs/battle/";
+            String fileName = logDir + battleId + ".json";
+            File file = new File(fileName);
+
+            // 检查文件是否存在
+            if (!file.exists()) {
+                log.warn("战斗日志文件不存在: {}", fileName);
+                return null;
+            }
+
+            // 读取文件内容
+            StringBuilder content = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line);
+                }
+            }
+
+            log.debug("成功读取战斗日志文件: {}", fileName);
+            return content.toString();
+        } catch (IOException e) {
+            log.error("读取战斗日志文件失败，battleId: {}", battleId, e);
+            return null;
+        }
+    }
+
+    // 玩家登录刷新在线保护时间
+    public void refreshMineLogin(Integer userId) {
+        UserMine mine = userMineMapper.selectOne(
+                new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, userId)
+        );
+        if (mine != null) {
+            MineUtil.refreshLoginTime(mine);
+            userMineMapper.updateById(mine);
+        }
+    }
+
+    // 矿场升级
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResp upgradeMine(TokenDto token, HttpServletRequest request) {
         BaseResp baseResp = new BaseResp();
-        // 添加 null 和空字符串检查
-        if (to == null || to.trim().isEmpty()) {
+        if (token == null || Xtool.isNull(token.getToken())) {
             baseResp.setSuccess(0);
-            baseResp.setErrorMsg("邮箱地址不能为空");
+            baseResp.setErrorMsg("登录过期");
             return baseResp;
         }
-        if (redisTemplate.hasKey(to)) {
-            Long time = redisTemplate.getExpire(to, TimeUnit.MINUTES);
+
+        if (token == null || Xtool.isNull(token.getUserId())) {
             baseResp.setSuccess(0);
-            baseResp.setErrorMsg(time + "秒后重新发送邮件");
+            baseResp.setErrorMsg("登录过期");
             return baseResp;
         }
-        MailModel mail = new MailModel();
-        int idcode = (int) (Math.random() * 1000000);
-        //内容
-        String content = "<div id=\"contentDiv\" onmouseover=\"getTop().stopPropagation(event);\" onclick=\"getTop().preSwapLink(event, 'html', 'ZC2708-4B3OUiNj8GLWCDFvxBD8Ta5');\" style=\"position:relative;font-size:14px;height:auto;padding:15px 15px 10px 15px;z-index:1;zoom:1;line-height:1.7;\" class=\"body\">    <div id=\"qm_con_body\"><div id=\"mailContentContainer\" class=\"qmbox qm_con_body_content qqmail_webmail_only\" style=\"\">        <style>\n" +
-                "html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{line-height:1.6;font-family:\"Helvetica Neue\",Helvetica,Arial,sans-serif;font-size:16px}body,dd,dl,fieldset,h1,h2,h3,h4,h5,ol,p,textarea,ul{margin:0}button,fieldset,input,legend,textarea{padding:0}button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}ol,ul{padding-left:0;list-style-type:none}a img,fieldset{border:0}a{text-decoration:none}.radius_avatar{display:inline-block;background-color:#FFF;padding:3px;border-radius:50%;-moz-border-radius:50%;-webkit-border-radius:50%;overflow:hidden;vertical-align:middle}.radius_avatar img{display:block;width:100%;height:100%;border-radius:50%;-moz-border-radius:50%;-webkit-border-radius:50%;background-color:#EEE}.btn_app{margin-top:10px;position:relative;display:block;margin-left:auto;margin-right:auto;padding-left:14px;padding-right:14px;-webkit-box-sizing:border-box;box-sizing:border-box;font-size:16px;text-align:center;text-decoration:none;color:#FFF;line-height:2.625;border-radius:5px;-webkit-tap-highlight-color:transparent;overflow:hidden}.btn_app:after{content:\" \";width:200%;height:200%;position:absolute;top:0;left:0;border:1px solid rgba(0,0,0,.2);-webkit-transform:scale(.5);transform:scale(.5);-webkit-transform-origin:0 0;transform-origin:0 0;-webkit-box-sizing:border-box;box-sizing:border-box;border-radius:10px}.btn_app_primary{background-color:#42C642}.btn_app_primary:link,.btn_app_primary:visited{color:#FFF}.btn_app_primary:active{color:rgba(255,255,255,.6)}.btn_app_default{background-color:#F7F7F7;color:#454545}.btn_app_default:link,.btn_app_default:visited{color:#454545}.btn_app_default:active{color:#C9C9C9}.skin_app_default{background-image:url(data:image/png;base64,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);-webkit-background-size:100% auto;background-size:100% auto;background-position:50% 0;background-repeat:no-repeat;background-color:#FFF}body,html{position:relative;height:100%}a,a:link,a:visited{color:#42C642}.mail_area{text-align:center;height:100%;-webkit-box-sizing:border-box;box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center;font-family:\"Helvetica Neue\",\"Hiragino Sans GB\",\"Microsoft YaHei\",\"\\9ED1\\4F53\",Arial,sans-serif}.mail{position:relative;display:inline-block;width:80%;margin-top:-150px;text-align:left}.mail_pc{background-color:#E6E6EA;display:block}.mail_pc .mail{width:850px;margin:45px 0;box-shadow:0 0 25px 5px rgba(0,0,0,.09);-moz-box-shadow:0 0 25px 5px rgba(0,0,0,.09);-webkit-box-shadow:0 0 25px 5px rgba(0,0,0,.09);background-color:#FFF;border-radius:8px;-moz-border-radius:8px;-webkit-border-radius:8px;overflow:hidden}.mail_pc .mail_inner{padding:17% 16% 10%}.mail_pc .mail_msg .btn_app{width:225px}.pic_skin_top{position:absolute;top:0;left:0;width:145px;height:175px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJEAAACvBAMAAAAPhiHNAAAAFVBMVEUAAADY2OLh4eLY2NrX19rX19nb29z1cYcUAAAAB3RSTlMAGgQUEAgMAJvI/gAAAnxJREFUaN7t2MFy0zAUheEzIe46WLLXN4VkbbuQtZPSrkWYslaC4f0fgU07HphGVuN/2fMA3xxdSxolupzlx/xEpbLOh7ySafOlJgkV+ZAzanGlktnnS+lKBVbpQ74UqMVVaajAKq2pStpTlW6wSmuqklpoL2kJbW/pRFUq8i8Bat6doHl7CTq8UdD+rqagG2rc+k6Nu8geN1UpUJU6qpIXVSlQlTpBe6nWZE7QntQSOm9atNCQ9IkaUpE5JGrcgVrbgVpbJ2htlaC11RJzTLwpY09CkE4U9IOCPlPQkoIKDMr4bDuJ+f5flZP9zEM7ZtJxQYzkTYz0ICGSD2KknWmmNBYiJHeQEOnBNFMaHUByl53F4Q2SP6YO+ypb2t3qcrbjHyhpyX05T17RfUp6Vh6PSmaxn3oU3H17/H00TWXbjj8x52Tx63kCc6FN+/JhgUL574L0hF5SznCKf+751cyFjemvdYbEG3NGn2u30+b+tdvv7XV+tonHYX62/9W5bhMsNkPindBkz2a42CZ/E9w+DXdz/2x6+jPcj0g6M98qYzwmlZjUYFLEJKMkJ0qqMGmFST0mGSU5UVKFSQ0mRUwySvKipBKTekwySvKipBKTekwySvKipBKTIiU5UVKFSQ0mGSV5UdIKkwIleVFSiUmBkrwoqcSkQElelNRgklFSLUrqKcmJkkpMCpRUi5J6SnKipA6TjJJKUVKgpEqCpEhJtSgpUlItSoqUVIuSAiVVoiSjpE6Q5IySekFSLUoySuoESV6UFCipEyTVgiRnlBQFSZ0gqRYkeYMkZ4KkIEiKgqSzIOkgSDoLkqIYyQUxkjcx0k5M3EFQTO/JyF9Bt4tB+689SAAAAABJRU5ErkJggg==) no-repeat}.pic_skin_bottom{position:absolute;bottom:0;right:0;width:300px;height:265px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEJBAMAAADcMgfDAAAAFVBMVEUAAADY2OLg4OHZ2dvZ2drY2NvZ2dtyNy61AAAAB3RSTlMAGgUKFhIO15MmpwAABDhJREFUeNrs3EFqG0EYBeHW3zPaF/gAljRoPxpL+wbnAA2S9000vv8REifBkEAgsZEpw9QJPt4BXlpaWlr6XEXyFaczSdaLCWSsPAM2Vj6DjpWvoGPFEXysfcHHiiv4WPuCjxVX8LFyRcjag5B1xMh6QMiKhpAVFSErKkJWVISsqAhZURGyomJkNYysB4ysASOrx8jKGFlRlayGkTVgZK0xsqIoWQ0ja8DIyihZVckaMLIySlZVsgaMrIySNSpZPUpWUbIGjKxAyRqVrIyS1ZSsHiWrKlk9SlZVsjqUrKJkdShZRcnqULKqktWjZFUla42S1ZSsjJI1KlmBkjU4WUXJ6lGympKVUbI2TlZRsjqUrKZkZZSsjZNVlKw1StaoZAVKVu9kjUpWoGR1TlZTsgIlq3OympIVKFm9kzUqWYGS1TtZGyerKFkZJWvlZFUlK1Cyeidr42QVJSujZHVO1uhkFSVrjZK1crKak4WStXayVk7WyB89Xi7P03TYvrabpuf58vixrMJrd5ev0zb9tdid5vMHsTI/+/J0uE//0vY0l9uzuh8rTffpf4ppLrdljXdPh/SWdqfzDVnbd12M1N9ZmnZzMbJeZGclK6U4FiPre6eqZKW0873+/IKlpW/tnM1OwkAUhU+AuHbaadcTja6rTVjzE1gXMK750/d/BMuogRBDJFzgM/Z7gpN7T8/caWamoaGh4e8QNxfl+4ayjJsOXZe78u3lx4Hdj17L64i770ZFhxitnnVJWnHY/A0HdwDmo8lRXEJZ+0CdDtQsyACzQm0Zna9k3b47gWypGpioDX4lax77zgC/tPXUxBmRFXYxtXaGjIPVy3G2eNk8/WcNsFQbZPKKD07WZyrQZH01kCVr20BjvE6gfZ4GjlZ3Bo9v2uJngWer02ebtTMnToInP74J6178BIGi7FXVoniqxkE8VdmzgKpmAqr67h8qGfySd9TBuTzgzvbUzBC3bPfwhax4MIyFoAjrVMierSBT31A1uMAaCnjAbqMKaPehBLS7paqWmd1T1eDWnFwSL91jiuLOBPuoCnY237k5soVTEbMhFTEbsiDgouMLZAunIn6FqYhfoQ8iBmkl4lq400LQbSIfkJFVIf2eC+n3QsR8H4iY75lEzPcKGQ7R77yLV1u/ky7PpcxiBWSxEhGXHc8s1gDprKZYRxULGfAD5mrILFYi5L4iIIfSVBJwKC0Ugb00kQsZpXMJGKWZkOnQQxreB6Thd6MU9IZJgTR8LhF30hXT8PoPhu8wDb9AGr7FTPgOcv7TBDn/tZkjTQcZWpogQ6vNDK0OcizVAtnDVtPDI3hCLjxi9vCG2UOjvcWtangRX0jAeMgkYjwkEjEe4kyD27Z6ScDpIWFaq2JaKyCtlTOt1WNaq0BaK0Y8b0FMJAEXxBjxvJ/ekoCzVowH3lYsxgMvTC3j4QPTTiPJb6EN4gAAAABJRU5ErkJggg==) no-repeat}h1{font-weight:400;position:absolute;right:48px;top:48px;line-height:300px;overflow:hidden;width:314px;height:32px;}.mail_info{padding:1.6em 0 0 56px;margin-top:4.3em;position:relative;border-top:1px #BBBBBD dashed;font-size:15px}.mail_info .radius_avatar{width:40px;height:40px;padding:0;position:absolute;top:1.6em;left:0}.mail_info strong{font-weight:400}.mail_info p{color:#C1C1C3;margin-top:-.05em;font-size:12px}.mail_msg{word-wrap:break-word;word-break:break-all}.mail_msg h2{font-weight:400;font-size:20px;color:#1D1D26;padding:1.34em 0 .6em}.mail_msg p{margin-bottom:24px}.mail_msg .btn_app{margin-top:45px}#app_mail .mail_msg .btn_app,#app_mail .mail_msg .btn_app:link,#app_mail .mail_msg .btn_app:visited{text-decoration:none}\n" +
-                "    </style>\n" +
-                "    \n" +
-                "    <div class=\"mail_area mail_pc\" id=\"app_mail\">\n" +
-                "        <div class=\"mail\">\n" +
-                "            <div class=\"mail_inner\">\n" +
-                "                <h1>YIMEM网技术平台</h1>\n" +
-                "                <div class=\"mail_msg\">\n" +
-                "                    <p>\n" +
-                "                        HI，" + to + " 你好!<br>\n" +
-                "                        感谢您对本站的支持与信赖，下面是您个人账号的激活码。\n" +
-                "                    </p>\n" +
-                "                    <p>\n" +
-                idcode +
-                "                    </p>\n" +
-                "                    <p>\n" +
-                "                        如果这不是你的邮件请忽略，很抱歉打扰你，请原谅。\n" +
-                "                    </p>\n" +
-                "                    <div class=\"mail_info\" ,=\"\" align=\"right\">\n" +
-                "                        <strong>YIMEM团队</strong>\n" +
-                "                    </div>\n" +
-                "                </div>\n" +
-                "                <div class=\"pic_skin_top\"></div>\n" +
-                "                <div class=\"pic_skin_bottom\"></div>\n" +
-                "            </div>\n" +
-                "        </div>\n" +
-                "    </div>\n" +
-                "<style type=\"text/css\">.qmbox style, .qmbox script, .qmbox head, .qmbox link, .qmbox meta {display: none !important;}</style></div></div><!-- --><style>#mailContentContainer .txt {height:auto;}</style>  </div>";
-        mail.setContent(content);
-        mail.setToEmails(to);
-        mail.setSubject("YIMEM网站账号激活");
-        baseResp = sendEmail(mail, idcode);
+        String userId = token.getUserId();
+        UserMine mine = userMineMapper.selectOne(
+                new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, userId)
+        );
+        if (mine == null) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("矿场未创建");
+            return baseResp;
+        }
+        int curLevel = mine.getMineLevel() == null ? 1 : mine.getMineLevel();
+        // 查询下一级配置
+        MineLevelConfig nextConfig = mineLevelConfigMapper.selectOne(
+                new LambdaQueryWrapper<MineLevelConfig>().eq(MineLevelConfig::getMineLevel, curLevel + 1)
+        );
+        if (nextConfig == null) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("已达最大等级，无法升级");
+            return baseResp;
+        }
+        int silver = mine.getCurrentSilver() == null ? 0 : mine.getCurrentSilver();
+        if (silver < nextConfig.getUpgradeCost()) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("银两不足");
+            return baseResp;
+        }
+        // 扣银两
+        mine.setCurrentSilver(silver - nextConfig.getUpgradeCost());
+        MineUtil.upgradeMine(mine, nextConfig);
+        userMineMapper.updateById(mine);
+        baseResp.setData(mine);
+        baseResp.setSuccess(1);
         return baseResp;
     }
 
-
-    public BaseResp sendEmail(MailModel mail, Integer idcode) {
+    // 收取仓库全部银两
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResp collectAllSilver(TokenDto token, HttpServletRequest request) {
         BaseResp baseResp = new BaseResp();
-        // 建立邮件消息
-        MimeMessage message = javaMailSender.createMimeMessage();
-
-        MimeMessageHelper messageHelper;
-        try {
-            messageHelper = new MimeMessageHelper(message, true, "UTF-8");
-            // 设置发件人邮箱
-            if (mail.getEmailFrom() != null) {
-                messageHelper.setFrom(mail.getEmailFrom());
-            } else {
-                try {
-                    messageHelper.setFrom(new InternetAddress(simpleMailMessage.getFrom(), "YIMEM网管理员", "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // 设置收件人邮箱
-            if (mail.getToEmails() != null) {
-                String[] toEmailArray = mail.getToEmails().split(";");
-                List<String> toEmailList = new ArrayList<String>();
-                if (null == toEmailArray || toEmailArray.length <= 0) {
-                    baseResp.setSuccess(0);
-                    baseResp.setErrorMsg("收件人邮箱不得为空");
-                    return baseResp;
-                } else {
-                    for (String s : toEmailArray) {
-                        if (s != null && !s.equals("")) {
-                            toEmailList.add(s);
-                        }
-                    }
-                    if (null == toEmailList || toEmailList.size() <= 0) {
-                        baseResp.setSuccess(0);
-                        baseResp.setErrorMsg("收件人邮箱不得为空");
-                        return baseResp;
-                    } else {
-                        toEmailArray = new String[toEmailList.size()];
-                        for (int i = 0; i < toEmailList.size(); i++) {
-                            toEmailArray[i] = toEmailList.get(i);
-                        }
-                    }
-                }
-                messageHelper.setTo(toEmailArray);
-            } else {
-                messageHelper.setTo(simpleMailMessage.getTo());
-            }
-
-            // 邮件主题
-            if (mail.getSubject() != null) {
-                messageHelper.setSubject(mail.getSubject());
-            } else {
-
-                messageHelper.setSubject(simpleMailMessage.getSubject());
-            }
-
-            // true 表示启动HTML格式的邮件
-            messageHelper.setText(mail.getContent(), true);
-
-
-            messageHelper.setSentDate(new Date());
-            // 发送邮件
-            javaMailSender.send(message);
-            baseResp.setSuccess(1);
-            baseResp.setErrorMsg("发送成功");
-            ValueOperations opsForValue = redisTemplate.opsForValue();
-            opsForValue.set(mail.getToEmails(), String.valueOf(idcode), 60, TimeUnit.SECONDS);
-        } catch (MessagingException e) {
+        if (token == null || Xtool.isNull(token.getToken())) {
             baseResp.setSuccess(0);
-            baseResp.setErrorMsg("邮件发送失败: " + e.getMessage());
-            e.printStackTrace();
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
         }
+
+        if (token == null || Xtool.isNull(token.getUserId())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        UserMine mine = userMineMapper.selectOne(
+                new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, userId)
+        );
+        int gain = mine.getCurrentSilver() == null ? 0 : mine.getCurrentSilver();
+        user.setGold(user.getGold().add(BigDecimal.valueOf(gain)));
+        userMapper.updateuser(user);
+        UserInfo userInfo = new UserInfo();
+        BeanUtils.copyProperties(user, userInfo);
+        MineUtil.collectSilver(mine);
+        userMineMapper.updateById(mine);
+        Map map = new HashMap();
+        map.put("gain", gain);
+        map.put("user", userInfo);
+        baseResp.setData(map);
+        baseResp.setSuccess(1);
         return baseResp;
+    }
+
+    // 抢夺矿场
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResp robMine(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+
+        if (token == null || Xtool.isNull(token.getUserId())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+
+        // 1. 先自然恢复
+        StaminaUtil.StaminaResult refresh = StaminaUtil.calcStamina(
+                user.getTiliCount(),
+                user.getTiliCountTime(),
+                user.getHuoliCount(),
+                user.getHuoliCountTime()
+        );
+        user.setTiliCount(refresh.getTiliCount());
+        user.setTiliCountTime(refresh.getTiliCountTime());
+        user.setHuoliCount(refresh.getHuoliCount());
+        user.setHuoliCountTime(refresh.getHuoliCountTime());
+        if (user.getHuoliCount() - 10 < 0) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("活力不足");
+            return baseResp;
+        }
+        if (user.getDuoCount() <= 0) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("挑战次数不足");
+            return baseResp;
+        }
+        //自己的战队
+        List<Characters> leftCharacter = charactersMapper.goIntoListById(user.getUserId() + "");
+        if (Xtool.isNull(leftCharacter)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("你没有配置战队无法战斗");
+            return baseResp;
+        }
+        for (Characters characters : leftCharacter) {
+            List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            if (Xtool.isNotNull(eqCharacters)) {
+                characters.setEqCharactersList(formateEqCharacter(eqCharacters));
+            }
+        }
+        Collections.sort(leftCharacter, Comparator.comparing(Characters::getGoIntoNum));
+        //对手战队
+        User user1 = userMapper.selectUserByUserId(Integer.parseInt(token.getId()));
+        if (user1.getDuoTime() != null && user1.getDuoTime().compareTo(new Date()) >= 0) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("对面还处于抢夺保护期");
+            return baseResp;
+        }
+        List<Characters> rightCharacter = charactersMapper.goIntoListById(user1.getUserId() + "");
+        if (Xtool.isNull(rightCharacter)) {
+            rightCharacter = new ArrayList<>(); // 必须先创建对象，才能add
+            Card card = cardMapper.selectByid(3);
+            if (card == null) {
+                baseResp.setErrorMsg("服务器异常联想管理员");
+                baseResp.setSuccess(0);
+                return baseResp;
+            }
+            Characters characters = new Characters();
+            BeanUtils.copyProperties(card, characters);
+            characters.setId("1002");
+            characters.setGoIntoNum(1);
+            characters.setLv(1);
+            characters.setUserId(user1.getUserId());
+            characters.setStar(new BigDecimal(1));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+            rightCharacter.add(characters);
+        }
+        for (Characters characters : rightCharacter) {
+            List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user1.getUserId() + "", characters.getId());
+            if (Xtool.isNotNull(eqCharacters)) {
+                characters.setEqCharactersList(formateEqCharacter(eqCharacters));
+            }
+        }
+        List<UserMine> targetMines = userMineMapper.selectList(new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, user1.getUserId()));
+        if (Xtool.isNull(targetMines)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("对方矿场还未建设");
+            return baseResp;
+        }
+        UserMine targetMine = targetMines.get(0);
+        Integer targetUserId = targetMine.getUserId();
+        MineUtil.MineRobResult robResult = MineUtil.checkAndCalcRob(targetMine);
+        if (!robResult.isCanRob()) {
+            baseResp.setErrorMsg(robResult.getRobMsg());
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+        Battle battle = this.battle(leftCharacter, Integer.parseInt(userId), user.getNickname(), rightCharacter, Integer.parseInt(token.getUserId()), user1.getNickname(), user.getGameImg(), "7");
+
+        //保证离线玩家
+        saveBattleLogToFile(battle.getId(), JsonUtils.toJson(battle.getJson()));
+        StaminaUtil.StaminaItem huoliRes = StaminaUtil.useHuoliPotion(user.getHuoliCount(), user.getHuoliCountTime(), -10);
+        user.setHuoliCount(huoliRes.getCount());
+        user.setHuoliCountTime(huoliRes.getCountTime());
+        user.setDuoCount(user.getDuoCount() - 1);
+        userMapper.updateuser(user);
+
+        List<PveReward> rewards = new ArrayList<>();
+        if (battle.getIsWin() == 0) {
+            // 更新目标矿场
+            MineUtil.doRobMine(targetMine, robResult);
+            userMineMapper.updateById(targetMine);
+            // 插入抢夺日志
+            MineRobLog log = MineUtil.buildRobLog(Integer.parseInt(userId), targetUserId, robResult);
+            log.setFightId(battle.getId());
+            mineRobLogMapper.insert(log);
+            // 此处自行扩展：给attackerId发放robResult.getRobSilver()银两
+            user.setGold(user.getGold().add(BigDecimal.valueOf(robResult.getRobSilver())));
+            userMapper.updateuser(user);
+            PveReward pveReward = new PveReward();
+            pveReward.setItemId(0);
+            pveReward.setItemName("金币");
+            pveReward.setRewardAmount(robResult.getRobSilver());
+            pveReward.setRewardType("2");
+            pveReward.setIndex(0);
+            rewards.add(pveReward);
+        }
+        UserInfo userInfo = new UserInfo();
+        BeanUtils.copyProperties(user, userInfo);
+        Map map = new HashMap();
+        map.put("rewards", rewards);
+        map.put("duoCount", userInfo.getDuoCount());
+        map.put("user", userInfo);
+        map.put("battle", battle);
+        baseResp.setData(map);
+        baseResp.setSuccess(1);
+        dailyViewFinsh(userId, "duoqukunchan_code");
+        return baseResp;
+    }
+
+    // 查询自己被抢记录分页
+    public BaseResp queryBeRobLog(TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+
+        if (token == null || Xtool.isNull(token.getUserId())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        String userId = token.getUserId();
+        List<MineRobLog> mineRobLogs = mineRobLogMapper.selectAll(userId);
+        for (MineRobLog mineRobLog : mineRobLogs) {
+            mineRobLog.setTimeStr(formatTime(mineRobLog.getCreateTime()));
+        }
+        baseResp.setData(mineRobLogs);
+        baseResp.setSuccess(1);
+        return baseResp;
+    }
+
+    // 查询自己抢夺别人记录分页
+    public List<MineRobLog> queryMyRobLog(Integer userId, long pageNum, long pageSize) {
+        LambdaQueryWrapper<MineRobLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MineRobLog::getAttackerUserId, userId);
+        wrapper.orderByDesc(MineRobLog::getCreateTime);
+        return mineRobLogMapper.selectList(wrapper);
+    }
+
+    // 根据用户ID查询矿场信息
+    public UserMine getMineByUserId(Integer userId) {
+        return userMineMapper.selectOne(
+                new LambdaQueryWrapper<UserMine>().eq(UserMine::getUserId, userId)
+        );
     }
 }

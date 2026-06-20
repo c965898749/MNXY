@@ -13,9 +13,9 @@ public interface GameServiceService {
     BaseResp gameVersion(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp registerGame(User user, HttpServletRequest request) throws Exception;
     BaseResp updateGame(TokenDto token, HttpServletRequest request) throws Exception;
-    BaseResp updateTli(TokenDto token, HttpServletRequest request) throws Exception;
-    BaseResp updateTli3(TokenDto token, HttpServletRequest request) throws Exception;
-    BaseResp updateTli2(TokenDto token, HttpServletRequest request) throws Exception;
+//    BaseResp updateTli(TokenDto token, HttpServletRequest request) throws Exception;
+//    BaseResp updateTli3(TokenDto token, HttpServletRequest request) throws Exception;
+//    BaseResp updateTli2(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp changeState(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp changeEqState(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp changeEqState2(TokenDto token, HttpServletRequest request) throws Exception;
@@ -46,10 +46,12 @@ public interface GameServiceService {
     BaseResp arenaMessageList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp receive(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp dailyReceive(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp livelyReceive(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp cailiao(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp hechenCailiao(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp yhechenCailiao(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp emailManage(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp getUserMine(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp getStore(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp getEqChares(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp chongzhi(TokenDto token, HttpServletRequest request) throws Exception;
@@ -94,6 +96,7 @@ public interface GameServiceService {
     BaseResp feiShenhechen(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp jingji(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp duoquJingji(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp kuanList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp friendAllList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp invitationSend(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp invitationHandle(TokenDto token, HttpServletRequest request) throws Exception;
@@ -106,6 +109,10 @@ public interface GameServiceService {
     BaseResp arenaTem(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp allCardList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp geremonialGiftList(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp upgradeMine(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp collectAllSilver(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp robMine(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp queryBeRobLog(TokenDto token, HttpServletRequest request) throws Exception;
     void sendRawrd();
     void executeMothlyTask();
     void deleteAll();
