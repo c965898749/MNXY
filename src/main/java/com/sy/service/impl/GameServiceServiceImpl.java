@@ -495,7 +495,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setStackCount(0);
             characters.setUserId(Integer.parseInt(emp.getUserId() + ""));
             characters.setStar(new BigDecimal(1));
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
             charactersMapper.insert2(characters);
             baseResp.setSuccess(1);
             baseResp.setErrorMsg("注册成功！");
@@ -1081,7 +1081,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                         characters.setLv(1);
                         characters.setUserId(Integer.parseInt(userId));
                         characters.setStar(new BigDecimal(1));
-                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                         charactersMapper.insert(characters);
                     }
                 } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -1261,7 +1261,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                         characters.setLv(1);
                         characters.setUserId(Integer.parseInt(userId));
                         characters.setStar(new BigDecimal(1));
-                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                         charactersMapper.insert(characters);
                     }
                 } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -2483,7 +2483,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else if ("5".equals(content.getItemType() + "") || "6".equals(content.getItemType() + "")) {
@@ -2656,7 +2656,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else if ("5".equals(content.getItemType() + "") || "6".equals(content.getItemType() + "")) {
@@ -2853,7 +2853,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else if ("5".equals(content.getItemType() + "") || "6".equals(content.getItemType() + "")) {
@@ -3007,7 +3007,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(new BigDecimal(1));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         }else {
@@ -3115,7 +3115,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(new BigDecimal(1));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         }else {
@@ -3795,7 +3795,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(new BigDecimal(1));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
             gameItemShop.setIsBuy(1);
@@ -3925,7 +3925,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(new BigDecimal(1));
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
             eqCharactersMapper.insert(characters);
 
             if (eqCard.getStar().compareTo(new BigDecimal(3)) > 0) {
@@ -4265,7 +4265,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             Card card = cardMapper.selectByid(Integer.parseInt(characters1.getId()));
 
             // 获取卡牌的初始星级对应的未飞升最大等级
-            int baseMaxLv = CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue());
+            int baseMaxLv = CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue());
 
             // 计算从baseMaxLv+1级到当前等级的经验总和（飞升后多投入的经验）
             int flyupExp = 0;
@@ -4309,7 +4309,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     newChar.setLv(1);
                     newChar.setUserId(Integer.parseInt(userId));
                     newChar.setStar(BigDecimal.ONE);
-                    newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card2.getName(), card2.getStar().doubleValue()));
+                    newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card2.getName(), card2.getStar().intValue()));
 
                     // 计算数量（修复null指针核心）
                     newChar.setStackCount(num.intValue() - 1); // 用newChar 不是 characters1！
@@ -4345,7 +4345,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(card1.getStar());
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
             charactersMapper.insert(characters);
         }
         CardDto dto = new CardDto();
@@ -4467,7 +4467,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(drawnCard.getStar());
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
             charactersMapper.insert(characters);
         }
         userMapper.updateuser(user);
@@ -4818,7 +4818,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(drawnCard.getStar());
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
             charactersMapper.insert(characters);
         }
         CardDto dto = new CardDto();
@@ -4932,7 +4932,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(new BigDecimal(1));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -5082,7 +5082,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         String userId = token.getUserId();
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
         //初始1星
-        Double start = 1.0;
+        Integer start = 1;
         if ("1".equals(token.getStr())) {
             BigDecimal gold = new BigDecimal(50000);
             if (gold.compareTo(user.getGold()) > 0) {
@@ -5104,7 +5104,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 }
                 gamePlayerBagMapper.updateById(playerBag);
             }
-            start = 1 + 0.5 * (int) (Math.random() * 5);
+            start = 1 + (int) (Math.random() * 5);
         } else if ("2".equals(token.getStr())) {
             BigDecimal gold = new BigDecimal(150000);
             if (gold.compareTo(user.getGold()) > 0) {
@@ -5126,7 +5126,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 }
                 gamePlayerBagMapper.updateById(playerBag);
             }
-            start = 3 + 0.5 * (int) (Math.random() * 2);
+            start = 3 + (int) (Math.random() * 2);
         } else if ("3".equals(token.getStr())) {
             BigDecimal gold = new BigDecimal(350000);
             if (gold.compareTo(user.getGold()) > 0) {
@@ -5148,7 +5148,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 }
                 gamePlayerBagMapper.updateById(playerBag);
             }
-            start = 3.5 + 0.5 * (int) (Math.random() * 2);
+            start = 4 + (int) (Math.random() * 2);
         } else if ("4".equals(token.getStr())) {
             BigDecimal gold = new BigDecimal(550000);
             if (gold.compareTo(user.getGold()) > 0) {
@@ -5170,7 +5170,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 }
                 gamePlayerBagMapper.updateById(playerBag);
             }
-            start = 4 + 0.5 * (int) (Math.random() * 2);
+            start = 4 + (int) (Math.random() * 2);
         }
 //        List<EqCard> cardList = eqCardMapper.selectByStr(token.getStr());
 //        cardList = cardList.stream().filter(x -> x.getWeight() > 0).collect(Collectors.toList());
@@ -5211,7 +5211,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         characters.setId(drawnCard.getId());
         characters.setLv(1);
         characters.setUserId(Integer.parseInt(userId));
-        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
         eqCharactersMapper.insert(characters);
         EqCardDto dto = new EqCardDto();
         dto.setHero(drawnCard);
@@ -5355,7 +5355,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(drawnCard.getStar());
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
             charactersMapper.insert(characters);
         }
         CardDto dto = new CardDto();
@@ -5448,7 +5448,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(drawnCard.getStar());
                 characters.setCreateTime(new Date());
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         }
@@ -5534,7 +5534,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(drawnCard.getStar());
                 characters.setCreateTime(new Date());
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(drawnCard.getName(), drawnCard.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         }
@@ -5623,7 +5623,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(userId));
             characters.setStar(new BigDecimal(1));
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
             rightCharacter.add(characters);
         }
         for (Characters characters : rightCharacter) {
@@ -6810,7 +6810,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -6962,7 +6962,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setStar(new BigDecimal(1));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
         } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -7199,7 +7199,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7227,7 +7227,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7256,7 +7256,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7287,7 +7287,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else {
@@ -7420,7 +7420,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                         characters.setLv(1);
                         characters.setUserId(Integer.parseInt(userId));
                         characters.setStar(new BigDecimal(1));
-                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                        characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                         charactersMapper.insert(characters);
                     }
                 } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -7603,7 +7603,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7631,7 +7631,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7660,7 +7660,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                                 characters.setLv(1);
                                 characters.setUserId(Integer.parseInt(userId));
                                 characters.setStar(new BigDecimal(1));
-                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                                 charactersMapper.insert(characters);
                             }
                         }
@@ -7704,7 +7704,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     newChar.setLv(1);
                     newChar.setUserId(Integer.parseInt(userId));
                     newChar.setStar(BigDecimal.ONE);
-                    newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                    newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
 
                     // 计算数量（修复null指针核心）
                     zhuNum = new BigDecimal(2).multiply(lv).subtract(BigDecimal.ONE);
@@ -7827,7 +7827,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     characters.setLv(1);
                     characters.setUserId(Integer.parseInt(userId));
                     characters.setStar(new BigDecimal(1));
-                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                    characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                     charactersMapper.insert(characters);
                 }
             } else if ("5".equals(content.getRewardType() + "") || "6".equals(content.getRewardType() + "")) {
@@ -8227,7 +8227,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                             characters.setLv(1);
                             characters.setUserId(Integer.parseInt(userId));
                             characters.setStar(new BigDecimal(1));
-                            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                             charactersMapper.insert(characters);
                         }
                     } else if ("7".equals(content.getRewardType() + "")) {
@@ -8637,7 +8637,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(Integer.parseInt(token.getUserId()));
             characters.setStar(new BigDecimal(1));
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
             rightCharacter.add(characters);
         }
         for (Characters characters : rightCharacter) {
@@ -9290,7 +9290,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         for (Characters characters : charactersList) {
             Character character = new Character();
             BeanUtils.copyProperties(characters, character);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(character.getLv(), character.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(character.getLv(), character.getStar().intValue());
             //格式化技能介绍
             if (Xtool.isNotNull(character.getPassiveIntroduceOneStr())) {
                 character.setPassiveIntroduceOneStr(NumberExtractUtil.replaceNumbersWithLevel(character.getPassiveIntroduceOneStr(), skillLevel[0]));
@@ -9322,7 +9322,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         //TODO 先初始化自身属性
         Character character = new Character();
         BeanUtils.copyProperties(characters, character);
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(character.getLv(), characters.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(character.getLv(), characters.getStar().intValue());
         BigDecimal lv = new BigDecimal(characters.getLv());
         BigDecimal maxHp = lv.multiply(characters.getHpGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
         BigDecimal attack = lv.multiply(characters.getAttackGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
@@ -9555,7 +9555,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setLv(1);
                 characters.setCreateTime(new Date());
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
             user.setSignCount(2);
@@ -9586,7 +9586,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setId("J1010_F294");
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card1.getName(), card1.getStar().intValue()));
                 eqCharactersMapper.insert(characters);
             }
             user.setSignCount(5);
@@ -9615,7 +9615,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 characters.setUserId(Integer.parseInt(userId));
                 characters.setLv(1);
                 characters.setCreateTime(new Date());
-                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+                characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
                 charactersMapper.insert(characters);
             }
             user.setSignCount(7);
@@ -11384,7 +11384,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setLv(1);
             characters.setUserId(user1.getUserId());
             characters.setStar(new BigDecimal(1));
-            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
+            characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().intValue()));
             rightCharacter.add(characters);
         }
         for (Characters characters : rightCharacter) {

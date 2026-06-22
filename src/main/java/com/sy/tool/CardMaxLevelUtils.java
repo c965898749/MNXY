@@ -8,8 +8,9 @@ import java.util.Map;
  * 核心规则：
  * 1. 特殊卡牌：指定名称直接返回固定等级（优先级最高）；
  * 2. 普通卡牌：
- *    - 1/1.5/2/2.5/3/3.5星：等级 = 星级 × 5；
- *    - 4星及以上（含4/4.5/5...）：等级固定25级；
+ *    - 1/2/3星：等级 = 星级 × 5；
+ *    - 4星：等级固定35级；
+ *    - 5星：等级固定45级；
  * 3. 星级异常值（≤0）：默认按1星计算。
  */
 public class CardMaxLevelUtils {
@@ -48,36 +49,28 @@ public class CardMaxLevelUtils {
     /**
      * 获取卡牌最大等级
      * @param cardName 卡牌名称（可为空，空则按普通卡牌处理）
-     * @param starLevel 卡牌星级（支持1/1.5/2/2.5...等小数星级）
+     * @param starLevel 卡牌星级（仅支持正整数1-5）
      * @return 卡牌最大等级
      */
-    public static int getMaxLevel(String cardName, double starLevel) {
+    public static int getMaxLevel(String cardName, int starLevel) {
         // 1. 优先判断特殊卡牌（名称匹配则直接返回）
         if (cardName != null && SPECIAL_CARD_MAP.containsKey(cardName)) {
             return SPECIAL_CARD_MAP.get(cardName);
         }
 
 //        // 2. 普通卡牌：星级校验（≤0则按1星算）
-//        double validStar = Math.max(starLevel, 1.0);
+//        int validStar = Math.max(starLevel, 1);
 
         // 3. 按星级计算等级
-        if (starLevel == 5.0) { // 4星及以上固定25级
+        if (starLevel == 5) {
             return 45;
-        } else if (starLevel == 4.5) { // 4星及以上固定25级
-            return 40;
-        } else if(starLevel == 4.0){  // 1~3.5星：星级 × 5（保留整数）
+        } else if(starLevel == 4){
             return 35;
-        }  else if(starLevel == 3.5){  // 1~3.5星：星级 × 5（保留整数）
-            return 30;
-        } else if(starLevel == 3.0){  // 1~3.5星：星级 × 5（保留整数）
+        } else if(starLevel == 3){
             return 25;
-        } else if(starLevel == 2.5){  // 1~3.5星：星级 × 5（保留整数）
-            return 20;
-        } else if(starLevel == 2.0){  // 1~3.5星：星级 × 5（保留整数）
+        } else if(starLevel == 2){
             return 15;
-        } else if(starLevel == 1.5){  // 1~3.5星：星级 × 5（保留整数）
-            return 10;
-        } else {  // 1~3.5星：星级 × 5（保留整数）
+        } else {
             return 5;
         }
     }

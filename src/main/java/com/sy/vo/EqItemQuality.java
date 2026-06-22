@@ -1,12 +1,11 @@
 package com.sy.vo;
 
 public enum EqItemQuality {
-    COMMON("3.5", 40),     // 权重40（最高）
-    ELITE("3", 30),      // 新增中间品质，权重25
-    UNCOMMON("2.5", 25),   // 权重20
+    COMMON("5", 40),     // 权重40（最高）
+    ELITE("4", 30),      // 新增中间品质，权重25
+    UNCOMMON("3", 25),   // 权重20
     RARE("2", 2),       // 权重10
-    LEGENDARY("1.5", 15),  // 权重5（最低）
-    LLEGENDARY("1", 5);   // 权重5（最低）
+    LEGENDARY("1", 15);  // 权重5（最低）
 
     private final String qualityName;  // 对应商城表的quality字段
     private final int weight;          // 权重值

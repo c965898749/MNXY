@@ -5,7 +5,7 @@ import java.util.Arrays;
 /**
  * 卡牌技能等级计算工具类（无技能等级封顶版）
  * 核心规则：
- * 1. 星级决定技能基础满级：1星=5级、1.5星=10级、2星=15级……（步长5）
+ * 1. 星级决定技能基础满级：1星=5级、2星=15级、3星=25级、4星=35级、5星=45级
  * 2. 初始技能：[1,0,0,0]，基础满级技能：[6,5,5,5]
  * 3. 满级后每增加5级，所有技能+1
  * 4. 移除技能等级封顶限制，技能等级可无上限增长
@@ -18,35 +18,35 @@ public class CardSkillLevelUtil {
     private static final int[] BASE_MAX_SKILL_LEVELS = {6, 5, 5, 5};
     // 初始星级（1星）对应的基础满级等级
     private static final int BASE_STAR_MAX_LEVEL = 5;
-    // 星级增量步长（0.5星对应等级增量）
-    private static final double STAR_STEP = 0.5;
-    // 星级对应的等级增量（每0.5星，基础满级+5级）
-    private static final int LEVEL_INCREMENT_PER_STAR_STEP = 5;
+    // 星级增量步长（1星对应等级增量）
+    private static final int STAR_STEP = 1;
+    // 星级对应的等级增量（每1星，基础满级+10级）
+    private static final int LEVEL_INCREMENT_PER_STAR_STEP = 10;
     // 满级后技能升级步长（每增加5级，所有技能+1）
     private static final int SKILL_UP_STEP = 5;
 
     /**
-     * 根据星级计算技能的基础满级等级（如1星=5，1.5星=10，4星=35）
-     * @param star 卡牌星级（支持0.5星步长，如1、1.5、2、2.5...）
+     * 根据星级计算技能的基础满级等级（如1星=5，2星=15，3星=25，4星=35，5星=45）
+     * @param star 卡牌星级（仅支持正整数1-5）
      * @return 该星级对应的技能基础满级等级
      */
-    public static int getSkillBaseMaxLevelByStar(double star) {
-        if (star <= 0) {
-            throw new IllegalArgumentException("星级必须大于0，当前值：" + star);
+    public static int getSkillBaseMaxLevelByStar(int star) {
+        if (star < 1 || star > 5) {
+            throw new IllegalArgumentException("星级必须在1-5之间，当前值：" + star);
         }
-        // 计算星级增量：(星级-1) / 0.5 → 得到0.5星的倍数
-        double starStepCount = (star - 1) / STAR_STEP;
+        // 计算星级增量：(星级-1) → 得到1星的倍数
+        int starStepCount = (star - 1) / STAR_STEP;
         // 基础满级等级 = 1星基础值 + 增量数 * 每步增量
-        return BASE_STAR_MAX_LEVEL + (int) (starStepCount * LEVEL_INCREMENT_PER_STAR_STEP);
+        return BASE_STAR_MAX_LEVEL + (starStepCount * LEVEL_INCREMENT_PER_STAR_STEP);
     }
 
     /**
      * 核心方法：根据卡牌等级和星级，计算4个技能的等级（无封顶）
      * @param cardLevel 卡牌当前等级（≥1）
-     * @param star 卡牌星级（≥1，支持0.5步长）
+     * @param star 卡牌星级（仅支持正整数1-5）
      * @return 4个技能的等级数组 [技能1, 技能2, 技能3, 技能4]
      */
-    public static int[] calculateSkillLevels(int cardLevel, double star) {
+    public static int[] calculateSkillLevels(int cardLevel, int star) {
         // 1. 参数校验
         if (cardLevel < 1) {
             throw new IllegalArgumentException("卡牌等级必须≥1，当前值：" + cardLevel);

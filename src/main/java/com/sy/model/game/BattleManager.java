@@ -143,7 +143,7 @@ public class BattleManager {
         List<Guardian> zhongyues = this.campA.stream().filter(g -> g.getName().equals("中岳大帝") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(zhongyues)) {
             Guardian zhongyue = zhongyues.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(zhongyue.getLevel(), zhongyue.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(zhongyue.getLevel(), zhongyue.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                五岳灵脉Lv1光环-增加我方全体飞弹伤害20点；
                 int heal = 25 * skillLevel[1];
@@ -157,7 +157,7 @@ public class BattleManager {
         List<Guardian> zhongyues2 = this.campB.stream().filter(g -> g.getName().equals("中岳大帝") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(zhongyues2)) {
             Guardian zhongyue = zhongyues2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(zhongyue.getLevel(), zhongyue.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(zhongyue.getLevel(), zhongyue.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                五岳灵脉Lv1光环-增加我方全体飞弹伤害20点；
                 int heal = 25 * skillLevel[1];
@@ -170,7 +170,7 @@ public class BattleManager {
         List<Guardian> baisuzhens = this.campB.stream().filter(g -> g.getName().equals("白素贞") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(baisuzhens)) {
             Guardian baisuzhen = baisuzhens.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().intValue());
 //            白素贞， 水漫金山Lv1减免自身收到火焰伤害10%；
             baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId());
 
@@ -179,7 +179,7 @@ public class BattleManager {
         List<Guardian> baisuzhens2 = this.campA.stream().filter(g -> g.getName().equals("白素贞") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(baisuzhens2)) {
             Guardian baisuzhen = baisuzhens2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().intValue());
 //            白素贞， 水漫金山Lv1减免自身收到火焰伤害10%；
             baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId());
 
@@ -189,7 +189,7 @@ public class BattleManager {
         List<Guardian> beiyues = this.campA.stream().filter(g -> g.getName().equals("北岳大帝") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(beiyues)) {
             Guardian beiyue = beiyues.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(beiyue.getLevel(), beiyue.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(beiyue.getLevel(), beiyue.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                五岳庇护Lv1光环-减少我方全体受到的火焰伤害20点
                 for (Guardian guardian : this.campA) {
@@ -202,7 +202,7 @@ public class BattleManager {
         List<Guardian> beiyues2 = this.campB.stream().filter(g -> g.getName().equals("北岳大帝") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(beiyues2)) {
             Guardian beiyue = beiyues2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(beiyue.getLevel(), beiyue.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(beiyue.getLevel(), beiyue.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                五岳庇护Lv1光环-减少我方全体受到的火焰伤害20点
                 for (Guardian guardian : this.campB) {
@@ -215,7 +215,7 @@ public class BattleManager {
         List<Guardian> qumozhenjuns = this.campB.stream().filter(g -> g.getName().equals("驱魔真君") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(qumozhenjuns)) {
             Guardian qumozhenjun = qumozhenjuns.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().intValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             if (skillLevel[1] > 0) {
                 qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId());
@@ -226,7 +226,7 @@ public class BattleManager {
         List<Guardian> qumozhenjun2 = this.campA.stream().filter(g -> g.getName().equals("驱魔真君") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(qumozhenjun2)) {
             Guardian qumozhenjun = qumozhenjun2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().intValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             if (skillLevel[1] > 0) {
                 qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId());
@@ -237,7 +237,7 @@ public class BattleManager {
         List<Guardian> jingjiashens = this.campB.stream().filter(g -> g.getName().equals("金甲神") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(jingjiashens)) {
             Guardian jingjiashen = jingjiashens.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().intValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId());
         }
@@ -245,7 +245,7 @@ public class BattleManager {
         List<Guardian> jingjiashens2 = this.campA.stream().filter(g -> g.getName().equals("金甲神") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(jingjiashens2)) {
             Guardian jingjiashen = jingjiashens2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().intValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId());
         }
@@ -253,7 +253,7 @@ public class BattleManager {
         List<Guardian> nezhas = this.campB.stream().filter(g -> g.getName().equals("哪吒") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(nezhas)) {
             Guardian nezha = nezhas.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                莲花圣体Lv1减免受到的火焰伤害、毒素伤害、飞弹伤害各10%；
                 nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
@@ -267,7 +267,7 @@ public class BattleManager {
         List<Guardian> nezhas2 = this.campA.stream().filter(g -> g.getName().equals("哪吒") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(nezhas2)) {
             Guardian nezha = nezhas2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                莲花圣体Lv1减免受到的火焰伤害、毒素伤害、飞弹伤害各10%；
                 nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
@@ -281,7 +281,7 @@ public class BattleManager {
         List<Guardian> jiaomowans = this.campA.stream().filter(g -> g.getName().equals("蛟魔王") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(jiaomowans)) {
             Guardian jiaomowan = jiaomowans.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jiaomowan.getLevel(), jiaomowan.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jiaomowan.getLevel(), jiaomowan.getStar().intValue());
             if (skillLevel[1] > 0) {
 //                防火阵法Lv1光环-我方全体增加火焰减伤50%；
                 for (Guardian guardian : this.campA) {
@@ -294,7 +294,7 @@ public class BattleManager {
         List<Guardian> jiaomowans2 = this.campB.stream().filter(g -> g.getName().equals("蛟魔王") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(jiaomowans2)) {
             Guardian jiaomowan = jiaomowans2.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jiaomowan.getLevel(), jiaomowan.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jiaomowan.getLevel(), jiaomowan.getStar().intValue());
             if (skillLevel[1] > 0) {
 //               防火阵法Lv1光环-我方全体增加火焰减伤50%；
                 for (Guardian guardian : this.campB) {
@@ -437,7 +437,7 @@ public class BattleManager {
     private void processRoundEndEffects() {
         // 托塔天王仙塔庇护
         if (fieldA != null && !fieldA.isDead() && fieldA.getName().equals("托塔天王")) {
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().intValue());
             if (skillLevel[1] > 0) {
                 int heal = 25 * skillLevel[1];
                 fieldA.setCurrentHp(fieldA.getCurrentHp() + heal);
@@ -456,7 +456,7 @@ public class BattleManager {
         }
 
         if (fieldB != null && !fieldB.isDead() && fieldB.getName().equals("托塔天王")) {
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().intValue());
             if (skillLevel[1] > 0) {
                 int heal = 25 * skillLevel[1];
                 fieldB.setCurrentHp(fieldB.getCurrentHp() + heal);
@@ -599,7 +599,7 @@ public class BattleManager {
     }
     //吃伤时技能
     private Integer triggerOnAttackedSkills(Guardian defender, Integer burnDamage,EffectType effectType){
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
             if (defender.isSilence()) {
                 return burnDamage;
             }
@@ -673,7 +673,7 @@ public class BattleManager {
     // 触发登场技能
 //   TODO  登场释放 大于速度 大于厂下速度 大于挨打释放 大于厂下后手排序队列释放
     private void triggerOnEnterSkills(Guardian guardian) {
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
 
         //TODO 登场触发技能
         switch (guardian.getName()) {
@@ -1075,7 +1075,7 @@ public class BattleManager {
     private void triggerOnEnterSkills2(Guardian guardian1,Guardian guardian2) {
         //TODO 对方登场优先在场先触发技能
         if (1 == 1&&guardian1!=null) {
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian1.getLevel(), guardian1.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian1.getLevel(), guardian1.getStar().intValue());
             Guardian enemy = guardian1.getCamp() == Camp.A ? fieldB : fieldA;
             if (!enemy.isSilence() && enemy != null) {
                 switch (enemy.getName()) {
@@ -1296,7 +1296,7 @@ public class BattleManager {
             }
         }
         if (1 == 1&&guardian2!=null) {
-            int[] skillLevel2 = CardSkillLevelUtil.calculateSkillLevels(guardian2.getLevel(), guardian2.getStar().doubleValue());
+            int[] skillLevel2 = CardSkillLevelUtil.calculateSkillLevels(guardian2.getLevel(), guardian2.getStar().intValue());
             Guardian enemy = guardian2.getCamp() == Camp.A ? fieldB : fieldA;
             if (!enemy.isSilence() && enemy != null) {
                 switch (enemy.getName()) {
@@ -1525,7 +1525,7 @@ public class BattleManager {
 
     // 触发攻击前技能
     private void triggerPreAttackSkills(Guardian attacker, Guardian defender) {
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(attacker.getLevel(), attacker.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(attacker.getLevel(), attacker.getStar().intValue());
         if (attacker.isSilence() || defender.isDead()) {
             return;
         }
@@ -1858,7 +1858,7 @@ public class BattleManager {
 
     // 触发受击技能
     private void triggerOnAttackedSkills(Guardian defender, Guardian attacker) {
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
         if (defender.isSilence()) {
             return;
         }
@@ -2517,7 +2517,7 @@ public class BattleManager {
         if (defender.isSilence()) {
             return;
         }
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
         switch (defender.getName()) {
             case "东岳大帝":
                 if (defender.isOnField() && !defender.isDead() && skillLevel[1] > 0) {
@@ -2691,7 +2691,7 @@ public class BattleManager {
 
     // 受到任意技能伤害触发技能
     private void triggerOnAttackedSkills(Guardian defender, EffectType effectType, int currentDepth) {
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
 //        烛龙，烛火燎原Lv1受到任意伤害时对全体敌方造成54点火焰伤害；致命衰竭Lv1场上，有单位登场时为目标添加衰弱状态，攻击减少10%，持续99回合；句芒协同Lv1与句芒在同一队伍时增加自身197点生命上限，99点火焰伤害，197点速度。
         if (defender.isSilence()) {
             return;
@@ -3145,7 +3145,7 @@ public class BattleManager {
 
     // 触发攻击后技能
     private void triggerPostAttackSkills(Guardian attacker, Guardian defender) {
-        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(attacker.getLevel(), attacker.getStar().doubleValue());
+        int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(attacker.getLevel(), attacker.getStar().intValue());
         if (attacker.isSilence()) {
             return;
         }
@@ -4976,7 +4976,7 @@ public class BattleManager {
                 }
                 List<Guardian> deadGuardians = new ArrayList<>();
                 Map<String, TargetBattleData> deadUnits = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 325 * skillLevel[0];
@@ -5065,7 +5065,7 @@ public class BattleManager {
             if (!offFieldEnemies.isEmpty()) {
 
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 for (Guardian g : offFieldEnemies) {
                     int totalPoisonDamage = 10 * skillLevel[0];
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -5137,7 +5137,7 @@ public class BattleManager {
             if (!offFieldEnemies.isEmpty()) {
 
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 for (Guardian g : offFieldEnemies) {
                     int totalPoisonDamage = 30 * skillLevel[0];
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -5181,7 +5181,7 @@ public class BattleManager {
             if (!offFieldEnemies.isEmpty()) {
 
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 for (Guardian g : offFieldEnemies) {
                     int totalPoisonDamage = 30 * skillLevel[0];
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -5221,7 +5221,7 @@ public class BattleManager {
                     campA.stream().filter(g -> !g.isDead() && g.getRace() == Race.IMMORTAL).collect(Collectors.toList()) :
                     campB.stream().filter(g -> !g.isDead() && g.getRace() == Race.IMMORTAL).collect(Collectors.toList());
             if (Xtool.isNotNull(immortalAllies)) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 if (!immortalAllies.isEmpty() && skillLevel[1] > 0) {
                     int heal = 70 * skillLevel[1];
 
@@ -5265,7 +5265,7 @@ public class BattleManager {
                     campA.stream().filter(g -> !g.isDead() && g.getPosition() == v.getPosition() + 1).collect(Collectors.toList()) :
                     campB.stream().filter(g -> !g.isDead() && g.getPosition() == v.getPosition() + 1).collect(Collectors.toList());
             if (Xtool.isNotNull(immortalAllies)) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(v.getLevel(), v.getStar().intValue());
                 int heal = 108 * skillLevel[0];
 
                 Guardian g = immortalAllies.get(0);
@@ -5294,7 +5294,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("句芒") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = (int) (0.06 * skillLevel[1] * changsheng.getMaxHp());
                     changsheng.setCurrentHp(changsheng.getCurrentHp() + hel);
@@ -5322,7 +5322,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("句芒") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = (int) (0.06 * skillLevel[1] * changsheng.getMaxHp());
                     changsheng.setCurrentHp(changsheng.getCurrentHp() + hel);
@@ -5356,7 +5356,7 @@ public class BattleManager {
                 Guardian minHpPerson = offFieldEnemies.get(0); // 先默认第一个为最大
                 List<Guardian> deadGuardians = new ArrayList<>();
                 Map<String, TargetBattleData> deadUnits = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 237 * skillLevel[1];
@@ -5451,7 +5451,7 @@ public class BattleManager {
                 Guardian minHpPerson = offFieldEnemies.get(0); // 先默认第一个为最大
                 List<Guardian> deadGuardians = new ArrayList<>();
                 Map<String, TargetBattleData> deadUnits = new HashMap<>();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 237 * skillLevel[1];
@@ -5539,7 +5539,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("牛魔王") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = 117 * skillLevel[1];
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
@@ -5575,7 +5575,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("牛魔王") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = 117 * skillLevel[1];
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
@@ -5611,7 +5611,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("鲤鱼精") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = 117 * skillLevel[1];
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
@@ -5647,7 +5647,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("鲤鱼精") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int hel = 117 * skillLevel[1];
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
@@ -5684,7 +5684,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("紫薇大帝") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
                     int value = 50 * skillLevel[1];
@@ -5715,7 +5715,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("紫薇大帝") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     changsheng.setBuffStacks(changsheng.getBuffStacks() + 1);
                     int value = 50 * skillLevel[1];
@@ -5748,7 +5748,7 @@ public class BattleManager {
             Guardian luoshen = campA.stream()
                     .filter(g -> g.getName().equals("洛神") && !g.isDead())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().intValue());
             if (skillLevel[1] > 0) {
                 attack = attack * skillLevel[1];
                 if (fieldA != null && !fieldA.isDead()) {
@@ -5780,7 +5780,7 @@ public class BattleManager {
             Guardian luoshen = campB.stream()
                     .filter(g -> g.getName().equals("洛神") && !g.isDead())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().intValue());
             if (skillLevel[1] > 0) {
                 attack = attack * skillLevel[1];
                 if (fieldB != null && !fieldB.isDead()) {
@@ -5815,7 +5815,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("芙蓉仙子") && !g.isDead())
                     .findFirst().get();
             if (fieldA != null && !fieldA.isDead()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().intValue());
                 int heal = 104 * skillLevel[0];
                 fieldA.setCurrentHp(fieldA.getCurrentHp() + heal);
 
@@ -5842,7 +5842,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("芙蓉仙子") && !g.isDead())
                     .findFirst().get();
             if (fieldB != null && !fieldB.isDead()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().intValue());
                 int heal = 104 * skillLevel[0];
                 fieldB.setCurrentHp(fieldB.getCurrentHp() + heal);
 
@@ -5876,7 +5876,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
 
             if (!immortalAllies.isEmpty()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 int heal = 90 * skillLevel[0];
 
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
@@ -5921,7 +5921,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
 
             if (!immortalAllies.isEmpty()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 int heal = 90 * skillLevel[0];
 
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
@@ -5961,7 +5961,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("太上老君")&& !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (skillLevel[2] > 0) {
                     if (fieldB != null && !fieldB.isDead()) {
                         // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -6051,7 +6051,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("太上老君") && !g.isDead())
                     .findFirst().get();
             if (!changsheng.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 430 * skillLevel[0];
@@ -6143,7 +6143,7 @@ public class BattleManager {
         List<Guardian> campAHasAlive = campA.stream().filter(g -> g.getName().equals("青霞仙子") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(campAHasAlive) && currentRound == 1) {
             Guardian defender = campAHasAlive.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
             int value = 60 * skillLevel[0];
             defender.setAttack(defender.getAttack() + value);
             addLog("克敌机先",
@@ -6165,7 +6165,7 @@ public class BattleManager {
         List<Guardian> campBHasAlive = campB.stream().filter(g -> g.getName().equals("青霞仙子") && !g.isDead()).collect(Collectors.toList());
         if (Xtool.isNotNull(campBHasAlive) && currentRound == 1) {
             Guardian defender = campBHasAlive.get(0);
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(defender.getLevel(), defender.getStar().intValue());
             int value = 60 * skillLevel[0];
             defender.setAttack(defender.getAttack() + value);
             addLog("克敌机先",
@@ -6186,7 +6186,7 @@ public class BattleManager {
 
         // 厚土娘娘后土聚能
         if (!fieldA.isSilence() && !fieldA.isDead() && fieldA != null && fieldA.getName().equals("厚土娘娘") && fieldA.getBuffStacks() < 99) {
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().intValue());
             if (skillLevel[1] > 0) {
                 fieldA.setBuffStacks(fieldA.getBuffStacks() + 1);
                 int hel = 197 * skillLevel[1];
@@ -6219,7 +6219,7 @@ public class BattleManager {
         }
 
         if (!fieldB.isSilence() && !fieldB.isDead() && fieldB != null && fieldB.getName().equals("厚土娘娘") && fieldB.getBuffStacks() < 99) {
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().intValue());
             if (skillLevel[1] > 0) {
                 fieldB.setBuffStacks(fieldB.getBuffStacks() + 1);
                 int hel = 197 * skillLevel[1];
@@ -6255,7 +6255,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("阎王") && !g.isDead())
                     .findFirst().get();
             if (!yanwang.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(yanwang.getLevel(), yanwang.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(yanwang.getLevel(), yanwang.getStar().intValue());
                 List<Guardian> allUnits = new ArrayList<>();
                 allUnits.addAll(campA);
                 allUnits.addAll(campB);
@@ -6333,7 +6333,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("阎王") && !g.isDead())
                     .findFirst().get();
             if (!yanwang.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(yanwang.getLevel(), yanwang.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(yanwang.getLevel(), yanwang.getStar().intValue());
                 List<Guardian> allUnits = new ArrayList<>();
                 allUnits.addAll(campA);
                 allUnits.addAll(campB);
@@ -6409,7 +6409,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("萌年兽") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                     int hel = 76 * skillLevel[1];
@@ -6448,7 +6448,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("红孩儿") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 int hel = 76 * skillLevel[0];
                 if (duoBaoGuanHuan()) {
                     nianshou.setCurrentHp(nianshou.getCurrentHp() + hel);
@@ -6485,7 +6485,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("西岳大帝") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                     int value = 15 * skillLevel[1];
@@ -6516,7 +6516,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("西岳大帝") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                     int value = 15 * skillLevel[1];
@@ -6548,7 +6548,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("萌年兽") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                     int hel = 76 * skillLevel[1];
@@ -6586,7 +6586,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("红孩儿") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence()) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 int hel = 76 * skillLevel[0];
                 if (duoBaoGuanHuan()) {
                     nianshou.setCurrentHp(nianshou.getCurrentHp() + hel);
@@ -6623,7 +6623,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("玉兔精") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                 int totalPoisonDamage = 20 * skillLevel[1];
                 // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -6656,7 +6656,7 @@ public class BattleManager {
                     .filter(g -> g.getName().equals("玉兔精") && !g.isDead())
                     .findFirst().get();
             if (!nianshou.isSilence() && nianshou.getBuffStacks() < 5) {
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nianshou.getLevel(), nianshou.getStar().intValue());
                 nianshou.setBuffStacks(nianshou.getBuffStacks() + 1);
                 int totalPoisonDamage = 20 * skillLevel[1];
                 // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -6688,7 +6688,7 @@ public class BattleManager {
             Guardian daji = campA.stream()
                     .filter(g -> g.getName().equals("玄冥") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
             // 毒入骨髓：随机敌方中毒
             List<Guardian> enemies = campB.stream()
@@ -6734,7 +6734,7 @@ public class BattleManager {
             Guardian daji = campB.stream()
                     .filter(g -> g.getName().equals("玄冥") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
 
             // 谄媚噬魂：随机敌方中毒
@@ -6783,7 +6783,7 @@ public class BattleManager {
                 Guardian daji = campA.stream()
                         .filter(g -> g.getName().equals("金钩大王") && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int totalPoisonDamage = 40 * skillLevel[0];
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -6825,7 +6825,7 @@ public class BattleManager {
                 Guardian daji = campB.stream()
                         .filter(g -> g.getName().equals("金钩大王") && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     int totalPoisonDamage = 40 * skillLevel[0];
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -6868,7 +6868,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("南华真人") && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 106 * skillLevel[0];
@@ -6957,7 +6957,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("南华真人") && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 106 * skillLevel[0];
@@ -7049,7 +7049,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 42 * skillLevel[0];
@@ -7142,7 +7142,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 42 * skillLevel[0];
@@ -7234,7 +7234,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int burnDamage = 35 * skillLevel[0];
@@ -7300,7 +7300,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int burnDamage = 35 * skillLevel[0];
@@ -7365,7 +7365,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     //TODO 真实伤害无法防御
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -7431,7 +7431,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     //TODO 真实伤害无法防御
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -7498,7 +7498,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     //TODO 真实伤害无增益也无法防御
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -7566,7 +7566,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     //TODO 真实伤害无增益也无法防御
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
@@ -7636,7 +7636,7 @@ public class BattleManager {
             // 查找血量最低的存活守卫
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 42 * skillLevel[0];
@@ -7732,7 +7732,7 @@ public class BattleManager {
                     .collect(Collectors.toList());
             if (Xtool.isNotNull(aliveUnits)) {
                 Guardian defender = aliveUnits.get(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (defender != null && !defender.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 42 * skillLevel[0];
@@ -7825,7 +7825,7 @@ public class BattleManager {
             // 查找血量最低的存活守卫
             if (xuli > 2) {
                 guardian.setBuffStacks(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //烈焰阵Lv1登场时，令敌方全体收到火焰伤害420点；
                 Map<String, TargetBattleData> deadUnits = new HashMap<>();
                 List<Guardian> deadGuardians = new ArrayList<>();
@@ -7939,7 +7939,7 @@ public class BattleManager {
             // 查找血量最低的存活守卫
             if (xuli > 2) {
                 guardian.setBuffStacks(0);
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //烈焰阵Lv1登场时，令敌方全体收到火焰伤害420点；
                 Map<String, TargetBattleData> deadUnits = new HashMap<>();
                 List<Guardian> deadGuardians = new ArrayList<>();
@@ -8049,7 +8049,7 @@ public class BattleManager {
             Guardian daji = campA.stream()
                     .filter(g -> g.getName().equals("妲己") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
 
             // 妖狐蔽天：3%几率眩晕当前敌人
@@ -8114,7 +8114,7 @@ public class BattleManager {
             Guardian daji = campB.stream()
                     .filter(g -> g.getName().equals("妲己") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
 
             // 妖狐蔽天：3%几率眩晕当前敌人
@@ -8180,7 +8180,7 @@ public class BattleManager {
             Guardian daji = campA.stream()
                     .filter(g -> g.getName().equals("白晶晶") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
 
             // 谄媚噬魂：随机敌方中毒
@@ -8226,7 +8226,7 @@ public class BattleManager {
             Guardian daji = campB.stream()
                     .filter(g -> g.getName().equals("白晶晶") && !g.isDead() && !g.isOnField())
                     .findFirst().get();
-            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().doubleValue());
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(daji.getLevel(), daji.getStar().intValue());
 
 
             // 谄媚噬魂：随机敌方中毒
@@ -8411,7 +8411,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("阎王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                     List<Guardian> enemies = guardian.getCamp() == Camp.A ?
@@ -8455,7 +8455,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("阎王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                     List<Guardian> enemies = guardian.getCamp() == Camp.A ?
@@ -8500,7 +8500,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("金角大王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                 List<Guardian> enemies = guardian.getCamp() == Camp.A ?
                         campB.stream().filter(g -> !g.isDead()).collect(Collectors.toList()) :
@@ -8541,7 +8541,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("金角大王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                 List<Guardian> enemies = guardian.getCamp() == Camp.A ?
                         campB.stream().filter(g -> !g.isDead()).collect(Collectors.toList()) :
@@ -8583,7 +8583,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("阎王") && g.getPosition() == position && !g.isDead() && !g.isOnField() && !g.isSilence())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                     List<Guardian> enemies = guardian.getCamp() == Camp.B ?
@@ -8627,7 +8627,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("阎王") && g.getPosition() == position && !g.isDead() && !g.isOnField() && !g.isSilence())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (skillLevel[1] > 0) {
                     //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                     List<Guardian> enemies = guardian.getCamp() == Camp.B ?
@@ -8672,7 +8672,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("金角大王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                 List<Guardian> enemies = guardian.getCamp() == Camp.B ?
                         campA.stream().filter(g -> !g.isDead()).collect(Collectors.toList()) :
@@ -8714,7 +8714,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("金角大王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //幽冥审判Lv1每当有敌方登场，令随机敌方中毒73；
                 List<Guardian> enemies = guardian.getCamp() == Camp.B ?
                         campA.stream().filter(g -> !g.isDead()).collect(Collectors.toList()) :
@@ -8757,7 +8757,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("玄冥") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && skillLevel[1] > 0 && fieldB.getBuffXuanMins() <= 0) {
                     int healDowNew = skillLevel[1] * 8;
                     fieldB.setBuffXuanMins(1);
@@ -8783,7 +8783,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("玄冥") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && skillLevel[1] > 0 && fieldB.getBuffXuanMins() <= 0) {
                     int healDowNew = skillLevel[1] * 8;
                     fieldB.setBuffXuanMins(1);
@@ -8810,7 +8810,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("玄冥") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
 
                 if (fieldA != null && skillLevel[1] > 0 && fieldA.getBuffXuanMins() <= 0) {
                     int healDowNew = skillLevel[1] * 8;
@@ -8838,7 +8838,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("玄冥") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
 
                 if (fieldA != null && skillLevel[1] > 0 && fieldA.getBuffXuanMins() <= 0) {
                     int healDowNew = skillLevel[1] * 8;
@@ -8868,7 +8868,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("镇元子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 178 * skillLevel[0];
@@ -8952,7 +8952,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("镇元子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //  禁心咒Lv1场下
                 if (fieldB != null && !fieldB.isDead() && skillLevel[1] > 0 && ProbabilityBooleanUtils.randomByProbability(0.5) && fieldB != null) {
                     fieldB.addEffect(EffectType.SILENCE, 0, 2, guardian.getId());
@@ -8978,7 +8978,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("镇元子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 178 * skillLevel[0];
@@ -9062,7 +9062,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("镇元子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //  禁心咒Lv1场下
                 if (fieldA != null && !fieldA.isDead() && skillLevel[1] > 0 && ProbabilityBooleanUtils.randomByProbability(0.5) && fieldA != null) {
                     fieldA.addEffect(EffectType.SILENCE, 0, 2, guardian.getId());
@@ -9088,7 +9088,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("南华真人") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 178 * skillLevel[0];
@@ -9172,7 +9172,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("南华真人") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 178 * skillLevel[0];
@@ -9258,7 +9258,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("北岳大帝") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 169 * skillLevel[0];
@@ -9342,7 +9342,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("北岳大帝") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 169 * skillLevel[0];
@@ -9427,7 +9427,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("西岳大帝") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 84 * skillLevel[0];
@@ -9511,7 +9511,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("西岳大帝") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 84 * skillLevel[0];
@@ -9596,7 +9596,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("西海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -9680,7 +9680,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("西海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -9765,7 +9765,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("东海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -9849,7 +9849,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("东海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -9934,7 +9934,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("南海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -10018,7 +10018,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("南海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -10103,7 +10103,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("北海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
 // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -10187,7 +10187,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("北海龙王") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 50 * skillLevel[0];
@@ -10272,7 +10272,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("白鹤童子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 30 * skillLevel[0];
@@ -10356,7 +10356,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("白鹤童子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 30 * skillLevel[0];
@@ -10442,7 +10442,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> g.getName().equals("金霞童子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldB != null && !fieldB.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 35 * skillLevel[0];
@@ -10526,7 +10526,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> g.getName().equals("金霞童子") && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 if (fieldA != null && !fieldA.isDead()) {
                     // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
                     int totalPoisonDamage = 178 * skillLevel[0];
@@ -10905,7 +10905,7 @@ public class BattleManager {
                 Guardian guardian = campA.stream()
                         .filter(g -> xuminHeroList.contains(g.getName()) && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //疾病效果或加成效果
 //                哪吒属性还是=飞弹伤害*（1-0.8哪吒）*（1-0.1蛇）*（1+0.1中岳光环）-（装备抗性-装备增伤）
                 int healDow = calculateTotalVaule(fieldA, EffectType.HEAL_DOWN);
@@ -11006,7 +11006,7 @@ public class BattleManager {
                 Guardian guardian = campB.stream()
                         .filter(g -> xuminHeroList.contains(g.getName()) && g.getPosition() == position && !g.isDead() && !g.isOnField())
                         .findFirst().get();
-                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().intValue());
                 //疾病效果或加成效果
 //                哪吒属性还是=飞弹伤害*（1-0.8哪吒）*（1-0.1蛇）*（1+0.1中岳光环）-（装备抗性-装备增伤）
                 int healDow = calculateTotalVaule(fieldB, EffectType.HEAL_DOWN);
