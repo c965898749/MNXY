@@ -74,11 +74,11 @@ public class CharacterState {
             this.onStage=create.getOnStage();
 
             this.maxEnergy = CharacterMetaState.Energy;
-            this.maxHp =Integer.parseInt(create.getLv() * CharacterMetaState.HpGrowth * ((create.getStar().subtract(new BigDecimal(1))).intValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
-            this.attack =Integer.parseInt(create.getLv() * CharacterMetaState.AttackGrowth * ((create.getStar().subtract(new BigDecimal(1))).intValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
-            this.defence =Integer.parseInt(create.getLv() * CharacterMetaState.DefenceGrowth * ((create.getStar().subtract(new BigDecimal(1))).intValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
-            this.speed =Integer.parseInt(create.getLv() * CharacterMetaState.SpeedGrowth * ((create.getStar().subtract(new BigDecimal(1))).intValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
-            this.pierce =Integer.parseInt(create.getLv() * CharacterMetaState.PierceGrowth * ((create.getStar().subtract(new BigDecimal(1))).intValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
+            this.maxHp =Integer.parseInt(create.getLv() * CharacterMetaState.HpGrowth * ((create.getStar().subtract(new BigDecimal(1))).doubleValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
+            this.attack =Integer.parseInt(create.getLv() * CharacterMetaState.AttackGrowth * ((create.getStar().subtract(new BigDecimal(1))).doubleValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
+            this.defence =Integer.parseInt(create.getLv() * CharacterMetaState.DefenceGrowth * ((create.getStar().subtract(new BigDecimal(1))).doubleValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
+            this.speed =Integer.parseInt(create.getLv() * CharacterMetaState.SpeedGrowth * ((create.getStar().subtract(new BigDecimal(1))).doubleValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
+            this.pierce =Integer.parseInt(create.getLv() * CharacterMetaState.PierceGrowth * ((create.getStar().subtract(new BigDecimal(1))).doubleValue() * 0.15 + 1) * (create.getLv() / 80 + 0.8)+"");
 
             this.critical = CharacterMetaState.Critical;
             this.block = CharacterMetaState.Block;

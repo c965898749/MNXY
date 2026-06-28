@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sy.mapper.UserMapper;
 import com.sy.mapper.game.*;
-import com.sy.model.game.CeremonialGiftRecord;
-import com.sy.model.game.DailyViewFinsh;
-import com.sy.model.game.GameNotice;
-import com.sy.model.game.UserMine;
+import com.sy.model.game.*;
 import com.sy.service.GameServiceService;
 import com.sy.tool.MineUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +13,9 @@ import org.springframework.stereotype.Component;
 
 
 import javax.annotation.Resource;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * XxlJob开发示例（Bean模式）
@@ -48,6 +43,14 @@ public class SampleXxlJob {
     private DailyViewFinshMapper dailyViewFinshMapper;
     @Autowired
     private CeremonialGiftRecordMapper giftRecordMapper;
+    @Autowired
+    private FriendBlessingMapper friendBlessingMapper;
+    @Autowired
+    private CharactersMapper charactersMapper;
+    @Autowired
+    private EqCharactersMapper eqCharactersMapper;
+    @Autowired
+    private GamePlayerBagMapper gamePlayerBagMapper;
     @Resource
     private UserMineMapper userMineMapper;
 
@@ -75,6 +78,132 @@ public class SampleXxlJob {
         // 清理7天前的礼仪礼品记录
         QueryWrapper<CeremonialGiftRecord> giftRecordWrapper = new QueryWrapper<>();
         giftRecordMapper.delete(giftRecordWrapper);
+
+        // 清理7天前的好友祝福记录
+        QueryWrapper<FriendBlessing> blessingWrapper = new QueryWrapper<>();
+        friendBlessingMapper.delete(blessingWrapper);
+
+        // 清理is_delete=1的角色记录
+        charactersMapper.deleteByIsDelete();
+
+        // 清理is_delete=1的装备角色记录
+        QueryWrapper<EqCharacters> eqCharactersWrapper = new QueryWrapper<>();
+        eqCharactersWrapper.eq("is_delete", "1");
+        eqCharactersMapper.delete(eqCharactersWrapper);
+
+        // 清理is_delete=1的玩家背包记录
+        QueryWrapper<GamePlayerBag> playerBagWrapper = new QueryWrapper<>();
+        playerBagWrapper.eq("is_delete", "1");
+        gamePlayerBagMapper.delete(playerBagWrapper);
+    }
+    
+    /**
+     * 每天6点执行：修复异常等级数据
+     */
+    @Scheduled(cron = "0 0 6 * * ?")
+    public void fixAbnormalLevel() {
+        userMapper.fixAbnormalLevel();
+    }
+    
+    /**
+     * 每天6点执行：修复异常Characters数据
+     */
+    @Scheduled(cron = "0 0 5 * * ?")
+    public void fixAbnormalCharacters() {
+        // 第一步：查询所有未删除的角色记录（is_delete='0'）
+        List<Characters> allCharacters = charactersMapper.selectActiveCardList();
+        
+        if (allCharacters == null || allCharacters.isEmpty()) {
+            return;
+        }
+        
+        int lvFixedCount = 0;
+        int duplicateFixedCount = 0;
+        
+        // 第二步：将lv=0的记录更新为1
+        for (Characters character : allCharacters) {
+            if ("0".equals(character.getIsDelete()) && character.getLv() != null && character.getLv() == 0) {
+                character.setLv(1);
+                character.setUpdateTime(new Date());
+                charactersMapper.updateByPrimaryKeySelective(character);
+                lvFixedCount++;
+            }
+        }
+        
+        // 第三步：处理重复数据 - 按userId和id分组（数据已经是is_delete='0'的，无需再过滤）
+        Map<String, List<Characters>> groupMap = allCharacters.stream()
+            .collect(Collectors.groupingBy(c -> c.getUserId() + "_" + c.getId()));
+        
+        // 第四步：对每组重复数据，保留最优的一条，其他的标记为删除
+        for (Map.Entry<String, List<Characters>> entry : groupMap.entrySet()) {
+            List<Characters> group = entry.getValue();
+            
+            if (group.size() <= 1) {
+                continue; // 没有重复，跳过
+            }
+            
+            // 找出最优的记录（stackCount、lv、flyup综合比较）
+            Characters best = findBestCharacter(group);
+            
+            // 将其余较差的记录标记为删除
+            for (Characters character : group) {
+                if (!character.getUuid().equals(best.getUuid())) {
+                    character.setIsDelete("1");
+                    character.setUpdateTime(new Date());
+                    charactersMapper.updateByPrimaryKeySelective(character);
+                    duplicateFixedCount++;
+                }
+            }
+        }
+        
+        System.out.println("Characters数据修复完成：修复lv=0的记录数=" + lvFixedCount + ", 标记删除的重复记录数=" + duplicateFixedCount);
+    }
+    
+    /**
+     * 从一组角色中找出最优的一条
+     * 比较规则：stackCount、lv、flyup，综合评分最高的为最优
+     */
+    private Characters findBestCharacter(List<Characters> characters) {
+        Characters best = characters.get(0);
+        
+        for (int i = 1; i < characters.size(); i++) {
+            Characters current = characters.get(i);
+            
+            if (isBetter(current, best)) {
+                best = current;
+            }
+        }
+        
+        return best;
+    }
+    
+    /**
+     * 判断current是否比other更优
+     * 如果current的所有字段都>=other，且至少有一个字段>other，则current更优
+     */
+    private boolean isBetter(Characters current, Characters other) {
+        int currentStackCount = current.getStackCount() != null ? current.getStackCount() : 0;
+        int otherStackCount = other.getStackCount() != null ? other.getStackCount() : 0;
+        
+        int currentLv = current.getLv() != null ? current.getLv() : 0;
+        int otherLv = other.getLv() != null ? other.getLv() : 0;
+        
+        int currentFlyup = current.getFlyup() != null ? current.getFlyup() : 0;
+        int otherFlyup = other.getFlyup() != null ? other.getFlyup() : 0;
+        
+        // current的所有字段都 >= other
+        boolean allGreaterOrEqual = 
+            currentStackCount >= otherStackCount &&
+            currentLv >= otherLv &&
+            currentFlyup >= otherFlyup;
+        
+        // 至少有一个字段严格大于
+        boolean atLeastOneGreater = 
+            currentStackCount > otherStackCount ||
+            currentLv > otherLv ||
+            currentFlyup > otherFlyup;
+        
+        return allGreaterOrEqual && atLeastOneGreater;
     }
     @Scheduled(cron = "0 0 0/4 * * ?")
     public void deleteAll(){

@@ -821,6 +821,13 @@ public class GameContoller {
         }
     }
 
+    /**
+     * 竞技列表
+     *
+     * @param token
+     * @param request
+     * @return
+     */
     @PostMapping("jingji")
     @CrossOrigin
     public BaseResp jingji(@RequestBody TokenDto token, HttpServletRequest request) {
@@ -1825,4 +1832,24 @@ public class GameContoller {
             return baseResp;
         }
     }
+    /**
+     * 视频列表
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("videoList")
+    @CrossOrigin
+    public BaseResp videoList(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.videoList(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
 }
