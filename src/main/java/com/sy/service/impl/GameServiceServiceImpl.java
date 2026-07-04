@@ -3,16 +3,15 @@ package com.sy.service.impl;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.sy.mapper.game.*;
 import com.sy.mapper.UserMapper;
+import com.sy.mapper.game.*;
 import com.sy.model.DailyContentVO;
 import com.sy.model.DailyListItemVO;
 import com.sy.model.MailModel;
 import com.sy.model.User;
-import com.sy.model.game.*;
 import com.sy.model.game.Character;
+import com.sy.model.game.*;
 import com.sy.model.resp.BaseResp;
 import com.sy.service.GameServiceService;
 import com.sy.service.UserServic;
@@ -38,19 +37,19 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.sy.tool.Constants.*;
 
 
 @Slf4j
@@ -510,6 +509,54 @@ public class GameServiceServiceImpl implements GameServiceService {
     }
 
     @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp forgotPassword(User user2, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        try {
+            if (user2 == null) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("请输入账号和密码");
+                return baseResp;
+            }
+            if (Xtool.isNull(user2.getUsername()) || Xtool.isNull(user2.getUserpassword())) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("请输入账号和密码");
+                return baseResp;
+            }
+            if (Xtool.isNull(user2.getYaoCode()) || Xtool.isNull(user2.getYaoCode())) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("请输入验证码");
+                return baseResp;
+            }
+            String Idcode = (String) redisTemplate.opsForValue().get(user2.getUsername());
+            if (!user2.getYaoCode().equals(Idcode)) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("验证码不正确");
+                return baseResp;
+            }
+            User user1 = userMapper.selectUserByusername(user2.getUsername());
+            if (user1 == null){
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("账号不存在");
+                return baseResp;
+            }
+            User user = new User();
+            user.setUserId(user1.getUserId());
+            String password = DigestUtils.md5DigestAsHex(user2.getUserpassword().getBytes());
+            user.setUserpassword(password);
+            userMapper.updateuser(user);
+            baseResp.setSuccess(1);
+            baseResp.setErrorMsg("重置成功！");
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+    @Override
     public BaseResp updateGame(TokenDto token, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
         if (token == null || Xtool.isNull(token.getToken())) {
@@ -524,6 +571,16 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        if (user==null) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        if (Xtool.isNull(user.getStatus())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
         //5、查看状态，如果为已禁用状态，则返回员工已禁用结果
         if (user.getStatus() == 0) {
             baseResp.setSuccess(0);

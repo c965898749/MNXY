@@ -1,17 +1,13 @@
 package com.sy.controller.game;
 
 import com.sy.model.User;
-import com.sy.model.game.GiftListItemVO;
-import com.sy.model.game.LevelUpResult;
 import com.sy.model.game.TokenDto;
 import com.sy.model.resp.BaseResp;
 import com.sy.service.GameServiceService;
-import com.sy.tool.NoRepeatSubmit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 @RestController
 public class GameContoller {
@@ -72,6 +68,27 @@ public class GameContoller {
         BaseResp baseResp = new BaseResp();
         try {
             baseResp = gameServiceService.registerGame(user, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+    /**
+     * 注册
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "forgotPassword", method = RequestMethod.POST)
+    @CrossOrigin
+    public BaseResp forgotPassword(@RequestBody User user, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.forgotPassword(user, request);
             return baseResp;
         } catch (Exception e) {
             e.printStackTrace();
