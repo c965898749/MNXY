@@ -1,6 +1,8 @@
 package com.sy.service;
 
 import com.sy.model.User;
+import com.sy.model.game.ChatMsg;
+import com.sy.model.game.LevelUpResult;
 import com.sy.model.game.TokenDto;
 import com.sy.model.resp.BaseResp;
 
@@ -41,6 +43,7 @@ public interface GameServiceService {
     BaseResp dailyViewList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp danChouEq(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp characteSell(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp characterCS(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp messageList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp duoMessageList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp arenaMessageList(TokenDto token, HttpServletRequest request) throws Exception;
@@ -51,6 +54,7 @@ public interface GameServiceService {
     BaseResp hechenCailiao(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp yhechenCailiao(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp emailManage(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp mobilecode(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp getUserMine(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp getStore(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp getEqChares(TokenDto token, HttpServletRequest request) throws Exception;
@@ -98,6 +102,11 @@ public interface GameServiceService {
     BaseResp duoquJingji(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp kuanList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp videoList(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp bosList(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp toggleGem(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp savePlay(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp deleteVideo(TokenDto token, HttpServletRequest request) throws Exception;
+    BaseResp saveChatMsg(ChatMsg chatMsg) throws Exception;
     BaseResp friendAllList(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp invitationSend(TokenDto token, HttpServletRequest request) throws Exception;
     BaseResp invitationHandle(TokenDto token, HttpServletRequest request) throws Exception;

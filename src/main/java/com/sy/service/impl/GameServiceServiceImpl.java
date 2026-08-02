@@ -2,16 +2,19 @@ package com.sy.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.sy.mapper.UserMapper;
+import com.sy.controller.game.AliyunSmsHelper;
 import com.sy.mapper.game.*;
+import com.sy.mapper.UserMapper;
 import com.sy.model.DailyContentVO;
 import com.sy.model.DailyListItemVO;
 import com.sy.model.MailModel;
 import com.sy.model.User;
-import com.sy.model.game.Character;
 import com.sy.model.game.*;
+import com.sy.model.game.Character;
 import com.sy.model.resp.BaseResp;
 import com.sy.service.GameServiceService;
 import com.sy.service.UserServic;
@@ -37,24 +40,26 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.sy.tool.Constants.*;
+
 
 @Slf4j
 @Service
 public class GameServiceServiceImpl implements GameServiceService {
+    @Autowired
+    private GameEquipInlayMapper gameEquipInlayMapper;
     @Autowired
     private UserMapper userMapper;
     @Autowired
@@ -186,6 +191,10 @@ public class GameServiceServiceImpl implements GameServiceService {
     private LivelyGiftMapper livelyGiftMapper;
     @Resource
     private LivelyGiftRecordMapper livelyGiftRecordMapper;
+    @Autowired
+    private AliyunSmsHelper aliyunSmsHelper;
+//    @Autowired
+//    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
     // 最大体力值
     private static final int MAX_STAMINA = 1500;
     // 每10分钟恢复1点体力
@@ -250,10 +259,16 @@ public class GameServiceServiceImpl implements GameServiceService {
         //获取卡牌数据
         List<Characters> characterList = charactersMapper.selectByUserId(emp.getUserId());
         List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(emp.getUserId());
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, emp.getUserId()));
+        for (EqCharacters eqCharacters : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(emp.getUserId() + "", 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -334,6 +349,20 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("登录过期");
             return baseResp;
         }
+        String key = buildChannelKey(1, 0L, 0L);
+        Map<String, List<JSONObject>> map = new HashMap<>();
+        List<Object> objList = redisTemplate.opsForList().range(key, 0, -1);
+        List<JSONObject> dataList = new ArrayList<>();
+
+        if (objList != null && !objList.isEmpty()) {
+            for (Object obj : objList) {
+                String jsonStr = (String) obj;
+                JSONObject jsonObj = JSONObject.parseObject(jsonStr);
+                dataList.add(jsonObj);
+            }
+        }
+        map.put("world", dataList);
+        baseResp.setData(map);
         baseResp.setSuccess(1);
         return baseResp;
     }
@@ -357,9 +386,6 @@ public class GameServiceServiceImpl implements GameServiceService {
             characterArrayList.add(character);
         }
         characterArrayList.addAll(reasonableData2(charactersList2));
-        for (Characters characters : charactersList2) {
-
-        }
         return characterArrayList;
     }
 
@@ -375,6 +401,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             eqCharacters.setDsDef(eqCharacters.getDsDef() * eqCharacters.getLv());
             eqCharacters.setFdDef(eqCharacters.getFdDef() * eqCharacters.getLv());
             eqCharacters.setZlDef(eqCharacters.getZlDef() * eqCharacters.getLv());
+            eqCharacters.setZlAtk(eqCharacters.getZlAtk() * eqCharacters.getLv());
         }
         return characterList;
     }
@@ -491,7 +518,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             BeanUtils.copyProperties(card, characters);
             characters.setUuid(null);
             characters.setId("1002");
-            characters.setLv(1);
+            characters.setLv(25);
             characters.setGoIntoNum(1);
             characters.setStackCount(0);
             characters.setUserId(Integer.parseInt(emp.getUserId() + ""));
@@ -621,10 +648,16 @@ public class GameServiceServiceImpl implements GameServiceService {
         //获取卡牌数据
         List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
         List<EqCharacters> characterEqList = eqCharactersMapper.selectByUserId(user.getUserId());
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
+        for (EqCharacters eqCharacters : characterEqList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -730,6 +763,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
         List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(Integer.parseInt(token.getUserId()));
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, token.getUserId()));
+        for (EqCharacters eqCharacters : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
         info.setEqCharactersList(formateEqCharacter(eqCharactersList));
         baseResp.setData(info);
         baseResp.setSuccess(1);
@@ -777,6 +816,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
         List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(Integer.parseInt(token.getUserId()));
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, token.getUserId()));
+        for (EqCharacters eqs : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqs.getUuid()+"")).collect(Collectors.toList());
+            eqs.setGemList(gemList);
+        }
         info.setEqCharactersList(formateEqCharacter(eqCharactersList));
 //        List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
 //        info.setCharacterList(formateCharacter(characterList));
@@ -981,7 +1026,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         itemMap.put("is_delete", "0");
         List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
         if (Xtool.isNotNull(playerBagList)) {
-            pveDetail.setNum(playerBagList.get(0).getItemCount());
+            pveDetail.setNum(playerBagList.get(0).getItemCount().intValue());
         } else {
             pveDetail.setNum(0);
         }
@@ -1071,8 +1116,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -1156,12 +1207,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                     List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                     if (Xtool.isNotNull(playerBagList)) {
                         GamePlayerBag playerBag = playerBagList.get(0);
-                        playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                        playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                         gamePlayerBagMapper.updateById(playerBag);
                     } else {
                         GamePlayerBag playerBag = new GamePlayerBag();
                         playerBag.setUserId(Integer.parseInt(userId));
-                        playerBag.setItemCount(content.getRewardAmount());
+                        playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                         playerBag.setGridIndex(1);
                         playerBag.setItemId(content.getItemId());
                         gamePlayerBagMapper.insert(playerBag);
@@ -1265,8 +1316,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -1340,12 +1397,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                     List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                     if (Xtool.isNotNull(playerBagList)) {
                         GamePlayerBag playerBag = playerBagList.get(0);
-                        playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                        playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                         gamePlayerBagMapper.updateById(playerBag);
                     } else {
                         GamePlayerBag playerBag = new GamePlayerBag();
                         playerBag.setUserId(Integer.parseInt(userId));
-                        playerBag.setItemCount(content.getRewardAmount());
+                        playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                         playerBag.setGridIndex(1);
                         playerBag.setItemId(content.getItemId());
                         gamePlayerBagMapper.insert(playerBag);
@@ -1628,14 +1685,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         GamePlayerBag gamePlayerBag = playerBags.get(0);
-        if (gamePlayerBag.getItemCount() - 1 < 0) {
+        if (gamePlayerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO) < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("吸纳券不足");
             return baseResp;
         }
         // 扣减物品数量
-        if (gamePlayerBag.getItemCount() - 1 > 0) {
-            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount() - 1);
+        if (gamePlayerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO) > 0) {
+            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount().subtract(BigDecimal.ONE));
         } else {
             gamePlayerBag.setIsDelete("1");
         }
@@ -1775,7 +1832,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("飞升需主卡达到满级");
             return baseResp;
         }
-        if (character.getFlyup() >= 10) { // 改为>=，防止越界
+        if (character.getFlyup() >= 20) { // 改为>=，防止越界
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("最多飞升10次");
             return baseResp;
@@ -1803,7 +1860,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         // 5.2 金币校验
-        if (user.getGold().compareTo(new BigDecimal(flyup.getGold())) < 0) {
+        if (user.getGold().compareTo(flyup.getGold()) < 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("飞升金币不足");
             return baseResp;
@@ -1834,7 +1891,7 @@ public class GameServiceServiceImpl implements GameServiceService {
 
         // 6. 扣减资源
         character.setStackCount(character.getStackCount() - flyup.getFlyupTimes());
-        user.setGold(user.getGold().subtract(new BigDecimal(flyup.getGold())));
+        user.setGold(user.getGold().subtract(flyup.getGold()));
         character.setFlyup(targetFlyupTimes);
         character.setMaxLv(character.getMaxLv() + 5); // 核心：更新maxLv
 
@@ -1871,7 +1928,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
 
         // 11. 查询当前飞升丹数量
-        int currentDanCount = getFlyupDanCount(token.getUserId(), itemId);
+        BigDecimal currentDanCount = getFlyupDanCount(token.getUserId(), itemId);
         data.put("dangyaoTotal", currentDanCount);
 
         // 12. 返回结果
@@ -1897,7 +1954,7 @@ public class GameServiceServiceImpl implements GameServiceService {
     /**
      * 校验并扣减飞升丹
      */
-    private boolean checkAndDeductFlyupDan(String userId, int itemId, int consumeCount, String professionName) {
+    private boolean checkAndDeductFlyupDan(String userId, int itemId, BigDecimal consumeCount, String professionName) {
         Map<String, Object> map = new HashMap<>();
         map.put("user_id", userId);
         map.put("item_id", itemId);
@@ -1909,17 +1966,17 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
 
         GamePlayerBag playerBag = playerBags.get(0);
-        if (playerBag.getItemCount() < consumeCount) {
+        if (playerBag.getItemCount().compareTo(consumeCount)<= 0) {
             return false;
         }
 
         // 扣减飞升丹
-        int remainCount = playerBag.getItemCount() - consumeCount;
-        if (remainCount > 0) {
+        BigDecimal remainCount = playerBag.getItemCount().subtract(consumeCount);
+        if (remainCount.compareTo(BigDecimal.ZERO)>0) {
             playerBag.setItemCount(remainCount);
         } else {
             playerBag.setIsDelete("1");
-            playerBag.setItemCount(0);
+            playerBag.setItemCount(BigDecimal.ZERO);
         }
         gamePlayerBagMapper.updateById(playerBag);
         return true;
@@ -1928,14 +1985,14 @@ public class GameServiceServiceImpl implements GameServiceService {
     /**
      * 获取当前飞升丹数量
      */
-    private int getFlyupDanCount(String userId, int itemId) {
+    private BigDecimal getFlyupDanCount(String userId, int itemId) {
         Map<String, Object> map = new HashMap<>();
         map.put("user_id", userId);
         map.put("item_id", itemId);
         map.put("is_delete", 0);
         List<GamePlayerBag> playerBags = gamePlayerBagMapper.selectByMap(map);
         if (CollectionUtils.isEmpty(playerBags)) {
-            return 0;
+            return BigDecimal.ZERO;
         }
         return playerBags.get(0).getItemCount();
     }
@@ -2253,6 +2310,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         user.setGold(user.getGold().subtract(new BigDecimal(result.getTotalSilverSpent())));
         userMapper.updateuser(user);
         List<EqCharacters> characterList = eqCharactersMapper.selectByUserId(user.getUserId());
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
+        for (EqCharacters eqCharacters : characterList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
         info.setEqCharactersList(formateEqCharacter(characterList));
@@ -2572,12 +2635,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                 List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                 if (Xtool.isNotNull(playerBagList)) {
                     GamePlayerBag playerBag = playerBagList.get(0);
-                    playerBag.setItemCount(playerBag.getItemCount() + content.getItemQuantity());
+                    playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getItemQuantity())));
                     gamePlayerBagMapper.updateById(playerBag);
                 } else {
                     GamePlayerBag playerBag = new GamePlayerBag();
                     playerBag.setUserId(Integer.parseInt(userId));
-                    playerBag.setItemCount(content.getItemQuantity());
+                    playerBag.setItemCount(new BigDecimal(content.getItemQuantity()));
                     playerBag.setGridIndex(1);
                     playerBag.setItemId(Integer.parseInt(content.getItemId() + ""));
                     gamePlayerBagMapper.insert(playerBag);
@@ -2588,10 +2651,10 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setSuccess(1);
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -2745,12 +2808,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                 List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                 if (Xtool.isNotNull(playerBagList)) {
                     GamePlayerBag playerBag = playerBagList.get(0);
-                    playerBag.setItemCount(playerBag.getItemCount() + content.getItemQuantity());
+                    playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getItemQuantity())));
                     gamePlayerBagMapper.updateById(playerBag);
                 } else {
                     GamePlayerBag playerBag = new GamePlayerBag();
                     playerBag.setUserId(Integer.parseInt(userId));
-                    playerBag.setItemCount(content.getItemQuantity());
+                    playerBag.setItemCount(new BigDecimal(content.getItemQuantity()));
                     playerBag.setGridIndex(1);
                     playerBag.setItemId(Integer.parseInt(content.getItemId() + ""));
                     gamePlayerBagMapper.insert(playerBag);
@@ -2761,10 +2824,10 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setSuccess(1);
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -2942,12 +3005,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                 List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                 if (Xtool.isNotNull(playerBagList)) {
                     GamePlayerBag playerBag = playerBagList.get(0);
-                    playerBag.setItemCount(playerBag.getItemCount() + content.getItemQuantity());
+                    playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getItemQuantity())));
                     gamePlayerBagMapper.updateById(playerBag);
                 } else {
                     GamePlayerBag playerBag = new GamePlayerBag();
                     playerBag.setUserId(Integer.parseInt(userId));
-                    playerBag.setItemCount(content.getItemQuantity());
+                    playerBag.setItemCount(new BigDecimal(content.getItemQuantity()));
                     playerBag.setGridIndex(1);
                     playerBag.setItemId(Integer.parseInt(content.getItemId() + ""));
                     gamePlayerBagMapper.insert(playerBag);
@@ -2958,10 +3021,10 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setSuccess(1);
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -3051,15 +3114,15 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("合成素材不足");
             return baseResp;
         }
-        if (playerBag.getItemCount() < craft.getMaterialCount()) {
+        if (playerBag.getItemCount().compareTo(new BigDecimal(craft.getMaterialCount()))<0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("合成素材不足");
             return baseResp;
         }
 
 
-        if (playerBag.getItemCount() - craft.getMaterialCount() > 0) {
-            playerBag.setItemCount(playerBag.getItemCount() - craft.getMaterialCount());
+        if (playerBag.getItemCount().subtract(new BigDecimal(craft.getMaterialCount())).compareTo(BigDecimal.ZERO)>0) {
+            playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(craft.getMaterialCount())));
             baseResp.setData(playerBag.getItemCount());
         } else {
             playerBag.setIsDelete("1");
@@ -3097,12 +3160,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                     .eq(GamePlayerBag::getIsDelete, "0"));
             if (Xtool.isNotNull(playerBagList)) {
                 GamePlayerBag bag = playerBagList.get(0);
-                bag.setItemCount(bag.getItemCount() + 1);
+                bag.setItemCount(bag.getItemCount().add(BigDecimal.ONE));
                 gamePlayerBagMapper.updateById(bag);
             } else {
                 GamePlayerBag bag = new GamePlayerBag();
                 bag.setUserId(Integer.parseInt(userId));
-                bag.setItemCount(1);
+                bag.setItemCount(BigDecimal.ONE);
                 bag.setGridIndex(1);
                 bag.setItemId(craft.getTargetId());
                 gamePlayerBagMapper.insert(bag);
@@ -3158,17 +3221,28 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("合成素材不足");
             return baseResp;
         }
-        if (playerBag.getItemCount() < craft.getMaterialCount()) {
+        if (playerBag.getItemCount().compareTo(new BigDecimal(craft.getMaterialCount()))<0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("合成素材不足");
             return baseResp;
         }
         // 计算playerBag.getItemCount()被craft.getMaterialCount()整除的倍数
-        int multiple = playerBag.getItemCount() / craft.getMaterialCount();
-        int totalMaterialUsed = multiple * craft.getMaterialCount();
+//        int multiple = playerBag.getItemCount() / craft.getMaterialCount();
+        BigDecimal itemCount = playerBag.getItemCount();
+        BigDecimal materialCount = new BigDecimal(craft.getMaterialCount());
+        BigDecimal multiple;
+        if (materialCount.compareTo(BigDecimal.ZERO) == 0) {
+            multiple = BigDecimal.ZERO;
+        } else {
+            // 向下取整，舍弃小数部分，材料不足一次直接为0
+            multiple = itemCount.divide(materialCount, 0, RoundingMode.FLOOR);
+        }
 
-        if (playerBag.getItemCount() - totalMaterialUsed > 0) {
-            playerBag.setItemCount(playerBag.getItemCount() - totalMaterialUsed);
+// 转数字使用
+        BigDecimal totalMaterialUsed = multiple.multiply(new BigDecimal(craft.getMaterialCount()));
+
+        if (playerBag.getItemCount().subtract(totalMaterialUsed).compareTo(BigDecimal.ZERO)>0) {
+            playerBag.setItemCount(playerBag.getItemCount().subtract(totalMaterialUsed));
             baseResp.setData(playerBag.getItemCount());
         } else {
             playerBag.setIsDelete("1");
@@ -3179,7 +3253,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         if ("4".equals(craft.getTargetType())){
             Characters characters1 = charactersMapper.listById(userId, craft.getTargetId() + "");
             if (characters1 != null) {
-                characters1.setStackCount(characters1.getStackCount() + multiple);
+                characters1.setStackCount(characters1.getStackCount() + multiple.intValue());
                 charactersMapper.updateByPrimaryKey(characters1);
             } else {
                 // 从缓存获取卡牌配置
@@ -3190,7 +3264,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     return baseResp;
                 }
                 Characters characters = new Characters();
-                characters.setStackCount(multiple-1);
+                characters.setStackCount(multiple.intValue()-1);
                 characters.setId(craft.getTargetId() + "");
                 characters.setLv(1);
                 characters.setUserId(Integer.parseInt(userId));
@@ -3206,7 +3280,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     .eq(GamePlayerBag::getIsDelete, "0"));
             if (Xtool.isNotNull(playerBagList)) {
                 GamePlayerBag bag = playerBagList.get(0);
-                bag.setItemCount(bag.getItemCount() + multiple);
+                bag.setItemCount(bag.getItemCount().add(multiple));
                 gamePlayerBagMapper.updateById(bag);
             } else {
                 GamePlayerBag bag = new GamePlayerBag();
@@ -3243,10 +3317,15 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         if (redisTemplate.hasKey(to)) {
-            Long time = redisTemplate.getExpire(to, TimeUnit.MINUTES);
-            baseResp.setSuccess(0);
-            baseResp.setErrorMsg(time + "秒后重新发送邮件");
-            return baseResp;
+            // 使用 TimeUnit.SECONDS 获取剩余秒数，和提示文字保持一致
+            Long remainSecond = redisTemplate.getExpire(to, TimeUnit.SECONDS);
+            // 兜底：防止-1永久key异常展示
+            if (remainSecond > 540) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg(remainSecond + "秒后重新发送邮件");
+                return baseResp;
+            }
+
         }
         MailModel mail = new MailModel();
         int idcode = (int) (Math.random() * 1000000);
@@ -3284,6 +3363,43 @@ public class GameServiceServiceImpl implements GameServiceService {
         mail.setToEmails(to);
         mail.setSubject("YIMEM网站账号激活");
         baseResp = sendEmail(mail, idcode);
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp mobilecode(TokenDto token, HttpServletRequest request) throws Exception {
+        String to = token.getStr();
+        BaseResp baseResp = new BaseResp();
+        // 添加 null 和空字符串检查
+        if (to == null || to.trim().isEmpty()) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("手机号不能为空");
+            return baseResp;
+        }
+        if (redisTemplate.hasKey(to)) {
+            Long time = redisTemplate.getExpire(to, TimeUnit.SECONDS);
+            // 防极端-1兜底
+            if(time > 540){
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg(time + "秒后重新发送验证码");
+                return baseResp;
+            }
+        }
+//        MailModel mail = new MailModel();
+        int idcode = (int) (Math.random() * 1000000);
+        // 调用第三方短信发送服务
+//        threadPoolTaskExecutor.submit(() -> {
+            String signName = "江苏依梦梦";
+            String templateCode = "SMS_511395001";
+            String templateParam = String.format("{\"code\":\"%s\"}", idcode);
+            aliyunSmsHelper.sendMessage(signName, templateCode, to, templateParam);
+//        });
+
+        ValueOperations opsForValue = redisTemplate.opsForValue();
+        opsForValue.set(to, String.valueOf(idcode),  600, TimeUnit.SECONDS);
+
+        baseResp.setSuccess(1);
+        baseResp.setErrorMsg("发送成功");
         return baseResp;
     }
 
@@ -3390,7 +3506,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setSuccess(1);
             baseResp.setErrorMsg("发送成功");
             ValueOperations opsForValue = redisTemplate.opsForValue();
-            opsForValue.set(mail.getToEmails(), String.valueOf(idcode), 60, TimeUnit.SECONDS);
+            opsForValue.set(mail.getToEmails(), String.valueOf(idcode),  600, TimeUnit.SECONDS);
         } catch (MessagingException e) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("邮件发送失败: " + e.getMessage());
@@ -3425,11 +3541,11 @@ public class GameServiceServiceImpl implements GameServiceService {
 //            // 4. 校验并扣减背包物品
             List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
                     .eq(GamePlayerBag::getItemId, 1).eq(GamePlayerBag::getUserId, userId).eq(GamePlayerBag::getIsDelete, "0"));
-            if (Xtool.isNotNull(playerBagList)&&playerBagList.get(0).getItemCount()>0) {
+            if (Xtool.isNotNull(playerBagList)&&playerBagList.get(0).getItemCount().compareTo(BigDecimal.ZERO)>0) {
                 GamePlayerBag playerBag = playerBagList.get(0);
                 // 扣减物品数量
-                if (playerBag.getItemCount() - 1 > 0) {
-                    playerBag.setItemCount(playerBag.getItemCount() - 1);
+                if (playerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO)> 0) {
+                    playerBag.setItemCount(playerBag.getItemCount().subtract(BigDecimal.ONE));
                 } else {
                     playerBag.setIsDelete("1");
                 }
@@ -3727,6 +3843,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             map2.put("ds_def", drawnCard.getDsAtk());
             map2.put("fd_def", drawnCard.getFdDef());
             map2.put("zl_def", drawnCard.getZlDef());
+            map2.put("zl_atk", drawnCard.getZlAtk());
             List<EqCard> eqCards = eqCardMapper.selectByMap(map2);
             if (Xtool.isNotNull(eqCards)) {
                 drawnCard.setId(eqCards.get(0).getId());
@@ -4045,6 +4162,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             BeanUtils.copyProperties(user, info);
             //获取卡牌数据
             List<EqCharacters> characterList = eqCharactersMapper.selectByUserId(user.getUserId());
+            List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                    .eq(GameEquipInlay::getUserId, user.getUserId()));
+            for (EqCharacters eqCharacters : characterList) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters.setGemList(gemList);
+            }
             info.setEqCharactersList(characterList);
             baseResp.setData(info);
             baseResp.setSuccess(1);
@@ -4126,12 +4249,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
         if (Xtool.isNotNull(playerBagList)) {
             GamePlayerBag playerBag = playerBagList.get(0);
-            playerBag.setItemCount(playerBag.getItemCount() + Integer.parseInt(token.getStr()));
+            playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(token.getStr())));
             gamePlayerBagMapper.updateById(playerBag);
         } else {
             GamePlayerBag playerBag = new GamePlayerBag();
             playerBag.setUserId(Integer.parseInt(userId));
-            playerBag.setItemCount(Integer.parseInt(token.getStr()));
+            playerBag.setItemCount(new BigDecimal(token.getStr()));
             playerBag.setGridIndex(1);
             playerBag.setItemId(Integer.parseInt(token.getId()));
             gamePlayerBagMapper.insert(playerBag);
@@ -5050,12 +5173,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
             if (Xtool.isNotNull(playerBagList)) {
                 GamePlayerBag playerBag = playerBagList.get(0);
-                playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                 gamePlayerBagMapper.updateById(playerBag);
             } else {
                 GamePlayerBag playerBag = new GamePlayerBag();
                 playerBag.setUserId(Integer.parseInt(userId));
-                playerBag.setItemCount(content.getRewardAmount());
+                playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                 playerBag.setGridIndex(1);
                 playerBag.setItemId(content.getItemId());
                 gamePlayerBagMapper.insert(playerBag);
@@ -5199,13 +5322,13 @@ public class GameServiceServiceImpl implements GameServiceService {
             }
             user.setGold(user.getGold().subtract(gold));
             GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
-            if (playerBag == null || playerBag.getItemCount() < 1000) {
+            if (playerBag == null || playerBag.getItemCount().compareTo(new BigDecimal(1000)) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             } else {
-                if (playerBag.getItemCount() - 1000 > 0) {
-                    playerBag.setItemCount(playerBag.getItemCount() - 1000);
+                if (playerBag.getItemCount().subtract(new BigDecimal(1000)).compareTo(new BigDecimal(0))>0) {
+                    playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(1000)));
                 } else {
                     playerBag.setIsDelete("1");
                 }
@@ -5221,13 +5344,13 @@ public class GameServiceServiceImpl implements GameServiceService {
             }
             user.setGold(user.getGold().subtract(gold));
             GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 14);
-            if (playerBag == null || playerBag.getItemCount() < 2000) {
+            if (playerBag == null || playerBag.getItemCount().compareTo(new BigDecimal(2000)) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             } else {
-                if (playerBag.getItemCount() - 2000 > 0) {
-                    playerBag.setItemCount(playerBag.getItemCount() - 2000);
+                if (playerBag.getItemCount().subtract(new BigDecimal(2000)).compareTo(BigDecimal.ZERO)>0) {
+                    playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(2000)));
                 } else {
                     playerBag.setIsDelete("1");
                 }
@@ -5243,13 +5366,13 @@ public class GameServiceServiceImpl implements GameServiceService {
             }
             user.setGold(user.getGold().subtract(gold));
             GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 15);
-            if (playerBag == null || playerBag.getItemCount() < 5000) {
+            if (playerBag == null || playerBag.getItemCount().compareTo(new BigDecimal(5000)) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             } else {
-                if (playerBag.getItemCount() - 5000 > 0) {
-                    playerBag.setItemCount(playerBag.getItemCount() - 5000);
+                if (playerBag.getItemCount().subtract(new BigDecimal(5000)).compareTo(BigDecimal.ZERO)>0) {
+                    playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(5000)));
                 } else {
                     playerBag.setIsDelete("1");
                 }
@@ -5265,13 +5388,13 @@ public class GameServiceServiceImpl implements GameServiceService {
             }
             user.setGold(user.getGold().subtract(gold));
             GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 16);
-            if (playerBag == null || playerBag.getItemCount() < 10000) {
+            if (playerBag == null || playerBag.getItemCount().compareTo(new BigDecimal(10000)) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             } else {
-                if (playerBag.getItemCount() - 10000 > 0) {
-                    playerBag.setItemCount(playerBag.getItemCount() - 10000);
+                if (playerBag.getItemCount().subtract(new BigDecimal(10000)).compareTo(BigDecimal.ZERO)> 0) {
+                    playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(10000)));
                 } else {
                     playerBag.setIsDelete("1");
                 }
@@ -5304,6 +5427,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         map2.put("ds_def", drawnCard.getDsAtk());
         map2.put("fd_def", drawnCard.getFdDef());
         map2.put("zl_def", drawnCard.getZlDef());
+        map2.put("zl_atk", drawnCard.getZlAtk());
         List<EqCard> eqCards = eqCardMapper.selectByMap(map2);
         if (Xtool.isNotNull(eqCards)) {
             drawnCard.setId(eqCards.get(0).getId());
@@ -5343,14 +5467,20 @@ public class GameServiceServiceImpl implements GameServiceService {
         }
         userMapper.updateuser(user);
         List<EqCharacters> nowCharactersList = eqCharactersMapper.selectByUserId(Integer.parseInt(userId));
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, userId));
+        for (EqCharacters eqCharacters : nowCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
         dto.setCharacters(nowCharactersList);
         //卡池数量
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user, info);
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -5419,6 +5549,155 @@ public class GameServiceServiceImpl implements GameServiceService {
         map.put("gold", gold);
         baseResp.setData(map);
         baseResp.setErrorMsg("出售成功");
+        return baseResp;
+    }
+
+    @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp characterCS(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        Characters characters1 = charactersMapper.listById(userId, token.getId());
+        if (characters1 == null) {
+            baseResp.setErrorMsg("卡牌已不存在");
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+        if (characters1.getFlyup() == 0) {
+            baseResp.setErrorMsg("未飞升");
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+        if (!checkAndDeductFlyupDan(userId,38,new BigDecimal(characters1.getFlyup()),"")) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("洗髓丹不足");
+            return baseResp;
+        }
+        // 从缓存获取卡牌配置
+        Card card = GameConfigCache.getCard(token.getId());
+        if (card == null) {
+            throw new Exception("服务器异常联系管理员");
+        }
+        // 从缓存获取卡牌经验配置
+        List<QqCardExp> qqCardExpList = GameConfigCache.getQqCardExpList();
+        int flyupExp = 0;
+        if (characters1.getLv() > 1) {
+            for (int level = 1; level < characters1.getLv(); level++) {
+                int finalLevel = level;
+                QqCardExp expConfig = qqCardExpList.stream()
+                        .filter(c -> card.getStar().compareTo(new BigDecimal(c.getUpgradeType())) == 0 && c.getLevel() == finalLevel)
+                        .findFirst()
+                        .orElse(null);
+                if (expConfig != null) {
+                    flyupExp += expConfig.getUpgradeExp();
+                }
+            }
+        }
+        int cadExp = characters1.getExp();
+        // 总溢出经验 = 飞升后投入的经验 + 当前溢出经验
+        int totalOverflowExp = flyupExp + cadExp;
+        if (totalOverflowExp > 5000) {
+            BigDecimal num = new BigDecimal(totalOverflowExp)
+                    .multiply(new BigDecimal("0.2"))
+                    .divide(BigDecimal.valueOf(5000), 0, RoundingMode.CEILING);
+            // 计算剩余经验
+            // 满级奖励：魂力宝珠（ID:105）
+            Characters characters2 = charactersMapper.listById(userId, "105");
+
+            if (characters2 != null) {
+                // 已有卡牌 → 叠加
+                characters2.setStackCount(characters2.getStackCount() + num.intValue());
+                charactersMapper.updateByPrimaryKey(characters2);
+            } else {
+                // 没有卡牌 → 新建（这里原来的代码严重错误！已修复）
+                // 从缓存获取卡牌配置
+                Card card2 = GameConfigCache.getCard("105");
+                if (card2 == null) {
+                    baseResp.setErrorMsg("服务器异常，请联系管理员");
+                    baseResp.setSuccess(0);
+                    return baseResp;
+                }
+                Characters newChar = new Characters();
+                newChar.setId("105");
+                newChar.setLv(1);
+                newChar.setUserId(Integer.parseInt(userId));
+                newChar.setStar(BigDecimal.ONE);
+                newChar.setMaxLv(CardMaxLevelUtils.getMaxLevel(card2.getName(), card2.getStar().doubleValue()));
+
+                // 计算数量（修复null指针核心）
+                newChar.setStackCount(num.intValue() - 1); // 用newChar 不是 characters1！
+
+                charactersMapper.insert(newChar);
+            }
+        }
+        // 5.3 飞升丹校验（抽取成方法，避免重复代码）
+        int itemId;
+        switch (characters1.getProfession()) {
+            case "武圣":
+                itemId = 21;
+                break;
+            case "神将":
+                itemId = 23;
+                break;
+            default:
+                itemId = 22; // 修复仙灵item_id错误
+                break;
+        }
+        List<QqShenxianFlyup> qqShenxianFlyupList = GameConfigCache.getShenxianFlyupList();
+        List<QqShenxianFlyup> qqShenxianFlyups = qqShenxianFlyupList.stream()
+                .filter(x -> x.getFlyupTimes() == characters1.getFlyup())
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(qqShenxianFlyups)) { // 使用Spring的CollectionUtils做空判断
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("飞升配置不存在");
+            return baseResp;
+        }
+        QqShenxianFlyup flyup = qqShenxianFlyups.get(0);
+        BigDecimal count =flyup.getTotalConsume().multiply(new BigDecimal("0.2"));
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("user_id", userId);
+        map2.put("item_id", itemId);
+        map2.put("is_delete", 0);
+        List<GamePlayerBag> playerBags = gamePlayerBagMapper.selectByMap(map2);
+        if (Xtool.isNotNull(playerBags)) {
+            GamePlayerBag playerBag2 = playerBags.get(0);
+            playerBag2.setItemCount(playerBag2.getItemCount().add(count));
+            gamePlayerBagMapper.updateById(playerBag2);
+        } else {
+            GamePlayerBag playerBag2 = new GamePlayerBag();
+            playerBag2.setUserId(Integer.parseInt(userId));
+            playerBag2.setItemCount(count);
+            playerBag2.setGridIndex(1);
+            playerBag2.setItemId(itemId);
+            gamePlayerBagMapper.insert(playerBag2);
+        }
+        characters1.setLv(1);
+        int baseMaxLv = CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue());
+        characters1.setExp(5);
+        characters1.setFlyup(0);
+        characters1.setMaxLv(baseMaxLv);
+        charactersMapper.updateByPrimaryKey(characters1);
+        List<Characters> nowCharactersList = charactersMapper.selectByUserId(Integer.parseInt(userId));
+        CardDto dto = new CardDto();
+        dto.setCharacters(nowCharactersList);
+        //卡池数量
+        baseResp.setSuccess(1);
+        Map map = new HashMap();
+        map.put("dto", dto);
+        baseResp.setData(map);
+        baseResp.setErrorMsg("重置成功");
         return baseResp;
     }
 
@@ -5705,8 +5984,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList2 = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList2.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -5733,8 +6018,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
             rightCharacter.add(characters);
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, token.getUserId()));
         for (Characters characters : rightCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(token.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -6030,8 +6321,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList2 = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList2.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -6045,8 +6342,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("对方没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user1.getUserId()));
         for (Characters characters : rightCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user1.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -6464,14 +6767,14 @@ public class GameServiceServiceImpl implements GameServiceService {
                 return baseResp;
             }
             GamePlayerBag playerBag = playerBagList.get(0);
-            if (playerBag.getItemCount() <= 0) {
+            if (playerBag.getItemCount().compareTo(BigDecimal.ZERO) <= 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("物品数量不足");
                 return baseResp;
             }
             // 扣减物品数量
-            if (playerBag.getItemCount() - 1 > 0) {
-                playerBag.setItemCount(playerBag.getItemCount() - 1);
+            if (playerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO) > 0) {
+                playerBag.setItemCount(playerBag.getItemCount().subtract(BigDecimal.ONE));
             } else {
                 playerBag.setIsDelete("1");
             }
@@ -6549,14 +6852,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         GamePlayerBag playerBag = playerBagList.get(0);
-        if (playerBag.getItemCount() <= 0) {
+        if (playerBag.getItemCount().compareTo(BigDecimal.ZERO) <= 0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("物品数量不足");
             return baseResp;
         }
         // 扣减物品数量
-        if (playerBag.getItemCount() - 1 > 0) {
-            playerBag.setItemCount(playerBag.getItemCount() - 1);
+        if (playerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO)> 0) {
+            playerBag.setItemCount(playerBag.getItemCount().subtract(BigDecimal.ONE));
         } else {
             playerBag.setIsDelete("1");
         }
@@ -6757,12 +7060,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         List<GamePlayerBag> playerBags = gamePlayerBagMapper.selectByMap(itemMap);
         if (Xtool.isNotNull(playerBags)) {
             GamePlayerBag gamePlayerBag = playerBags.get(0);
-            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount() + count);
+            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount().add(new BigDecimal(count)));
             gamePlayerBagMapper.updateById(gamePlayerBag);
         } else {
             GamePlayerBag gamePlayerBag = new GamePlayerBag();
             gamePlayerBag.setUserId(Integer.parseInt(userId));
-            gamePlayerBag.setItemCount(count); // 修复原代码写死为2的错误
+            gamePlayerBag.setItemCount(new BigDecimal( count)); // 修复原代码写死为2的错误
             gamePlayerBag.setGridIndex(1);
             gamePlayerBag.setItemId(itemId);
             gamePlayerBagMapper.insert(gamePlayerBag);
@@ -6944,12 +7247,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                 List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                 if (Xtool.isNotNull(playerBagList)) {
                     GamePlayerBag playerBag = playerBagList.get(0);
-                    playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                    playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                     gamePlayerBagMapper.updateById(playerBag);
                 } else {
                     GamePlayerBag playerBag = new GamePlayerBag();
                     playerBag.setUserId(Integer.parseInt(userId));
-                    playerBag.setItemCount(content.getRewardAmount());
+                    playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                     playerBag.setGridIndex(1);
                     playerBag.setItemId(content.getItemId());
                     gamePlayerBagMapper.insert(playerBag);
@@ -6982,10 +7285,10 @@ public class GameServiceServiceImpl implements GameServiceService {
         User user2 = userMapper.selectUserByUserId(Integer.parseInt(userId));
         UserInfo info = new UserInfo();
         BeanUtils.copyProperties(user2, info);
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -7003,6 +7306,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             info.setCrystal(playerBag3.getItemCount());
         }
         List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(info.getUserId());
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, info.getUserId()));
+        for (EqCharacters eqCharacters : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
         info.setEqCharactersList(eqCharactersList);
         map.put("user", info);
         baseResp.setData(map);
@@ -7096,12 +7405,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
             if (Xtool.isNotNull(playerBagList)) {
                 GamePlayerBag playerBag = playerBagList.get(0);
-                playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                 gamePlayerBagMapper.updateById(playerBag);
             } else {
                 GamePlayerBag playerBag = new GamePlayerBag();
                 playerBag.setUserId(Integer.parseInt(userId));
-                playerBag.setItemCount(content.getRewardAmount());
+                playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                 playerBag.setGridIndex(1);
                 playerBag.setItemId(content.getItemId());
                 gamePlayerBagMapper.insert(playerBag);
@@ -7117,10 +7426,16 @@ public class GameServiceServiceImpl implements GameServiceService {
         //获取卡牌数据
         List<Characters> characterList = charactersMapper.selectByUserId(emp.getUserId());
         List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(emp.getUserId());
-        info.setBronze(0);
-        info.setDarkSteel(0);
-        info.setPurpleGold(0);
-        info.setCrystal(0);
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, emp.getUserId()));
+        for (EqCharacters eqCharacters : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
+        info.setBronze(BigDecimal.ZERO);
+        info.setDarkSteel(BigDecimal.ZERO);
+        info.setPurpleGold(BigDecimal.ZERO);
+        info.setCrystal(BigDecimal.ZERO);
         GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(emp.getUserId() + "", 13);
         if (playerBag != null) {
             info.setBronze(playerBag.getItemCount());
@@ -7517,8 +7832,14 @@ public class GameServiceServiceImpl implements GameServiceService {
 
     /** 填充战队角色装备 */
     private void fillCharacterEquip(String userId, List<Characters> charList) {
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, userId));
         for (Characters ch : charList) {
             List<EqCharacters> eqList = eqCharactersMapper.listByGoOn(userId, ch.getId());
+            for (EqCharacters eqCharacters1 : eqList) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (!CollectionUtils.isEmpty(eqList)) {
                 ch.setEqCharactersList(formateEqCharacter(eqList));
             }
@@ -7567,7 +7888,7 @@ public class GameServiceServiceImpl implements GameServiceService {
         } else if (n2 + 1 <= 6) {
             n2++;
             n3 = 1;
-        } else if (n1 + 1 <= 8) {
+        } else if (n1 + 1 <= 10) {
             n1++;
             n2 = 1;
             n3 = 1;
@@ -7617,12 +7938,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         List<GamePlayerBag> bagList = gamePlayerBagMapper.selectByMap(bagMap);
         if (!CollectionUtils.isEmpty(bagList)) {
             GamePlayerBag bag = bagList.get(0);
-            bag.setItemCount(bag.getItemCount() + reward.getRewardAmount());
+            bag.setItemCount(bag.getItemCount().add(new BigDecimal(reward.getRewardAmount())));
             gamePlayerBagMapper.updateById(bag);
         } else {
             GamePlayerBag newBag = new GamePlayerBag();
             newBag.setUserId(uid);
-            newBag.setItemCount(reward.getRewardAmount());
+            newBag.setItemCount(new BigDecimal(reward.getRewardAmount()));
             newBag.setGridIndex(1);
             newBag.setItemId(reward.getItemId());
             gamePlayerBagMapper.insert(newBag);
@@ -7669,14 +7990,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             return baseResp;
         }
         GamePlayerBag gamePlayerBag = playerBags.get(0);
-        if (gamePlayerBag.getItemCount() - num < 0) {
+        if (gamePlayerBag.getItemCount().subtract(new BigDecimal(num)).compareTo(BigDecimal.ZERO)<0) {
             baseResp.setSuccess(0);
             baseResp.setErrorMsg("扫荡券不足");
             return baseResp;
         }
         // 扣减物品数量
-        if (gamePlayerBag.getItemCount() - num > 0) {
-            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount() - num);
+        if (gamePlayerBag.getItemCount().subtract(new BigDecimal(num)).compareTo(BigDecimal.ZERO)> 0) {
+            gamePlayerBag.setItemCount(gamePlayerBag.getItemCount().subtract(new BigDecimal(num)));
         } else {
             gamePlayerBag.setIsDelete("1");
         }
@@ -7970,13 +8291,13 @@ public class GameServiceServiceImpl implements GameServiceService {
                 if (Xtool.isNotNull(playerBagList)) {
                     // 已有道具，累加总数量
                     GamePlayerBag playerBag = playerBagList.get(0);
-                    playerBag.setItemCount(playerBag.getItemCount() + totalAmount);
+                    playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(totalAmount)));
                     gamePlayerBagMapper.updateById(playerBag);
                 } else {
                     // 新增道具
                     GamePlayerBag playerBag = new GamePlayerBag();
                     playerBag.setUserId(Integer.parseInt(userId));
-                    playerBag.setItemCount(totalAmount);
+                    playerBag.setItemCount(new BigDecimal(totalAmount));
                     playerBag.setGridIndex(1);
                     playerBag.setItemId(content.getItemId());
                     gamePlayerBagMapper.insert(playerBag);
@@ -8379,12 +8700,12 @@ public class GameServiceServiceImpl implements GameServiceService {
                         List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
                         if (Xtool.isNotNull(playerBagList)) {
                             GamePlayerBag playerBag = playerBagList.get(0);
-                            playerBag.setItemCount(playerBag.getItemCount() + content.getRewardAmount());
+                            playerBag.setItemCount(playerBag.getItemCount().add(new BigDecimal(content.getRewardAmount())));
                             gamePlayerBagMapper.updateById(playerBag);
                         } else {
                             GamePlayerBag playerBag = new GamePlayerBag();
                             playerBag.setUserId(Integer.parseInt(userId));
-                            playerBag.setItemCount(content.getRewardAmount());
+                            playerBag.setItemCount(new BigDecimal(content.getRewardAmount()));
                             playerBag.setGridIndex(1);
                             playerBag.setItemId(content.getItemId());
                             gamePlayerBagMapper.insert(playerBag);
@@ -8399,11 +8720,17 @@ public class GameServiceServiceImpl implements GameServiceService {
             UserInfo info = new UserInfo();
             BeanUtils.copyProperties(user2, info);
             List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(info.getUserId());
+            List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                    .eq(GameEquipInlay::getUserId, info.getUserId()));
+            for (EqCharacters eqCharacters : eqCharactersList) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters.setGemList(gemList);
+            }
             info.setEqCharactersList(eqCharactersList);
-            info.setBronze(0);
-            info.setDarkSteel(0);
-            info.setPurpleGold(0);
-            info.setCrystal(0);
+            info.setBronze(BigDecimal.ZERO);
+            info.setDarkSteel(BigDecimal.ZERO);
+            info.setPurpleGold(BigDecimal.ZERO);
+            info.setCrystal(BigDecimal.ZERO);
             GamePlayerBag playerBag = gamePlayerBagMapper.goIntoListByIdAndItemId(userId, 13);
             if (playerBag != null) {
                 info.setBronze(playerBag.getItemCount());
@@ -8580,8 +8907,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList2 = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, userId));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(userId, characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList2.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -8604,8 +8937,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("暂无对手请稍后尝试");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, gameArenaSignup2.getUserId()));
         for (Characters characters : rightCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(gameArenaSignup2.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -8726,8 +9065,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList2 = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, userId));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(userId, characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList2.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -8759,8 +9104,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
             rightCharacter.add(characters);
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, token.getUserId()));
         for (Characters characters : rightCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(token.getUserId(), characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -8802,9 +9153,16 @@ public class GameServiceServiceImpl implements GameServiceService {
 
             if (Xtool.isNotNull(playerBagList)) {
                 GamePlayerBag playerBag = playerBagList.get(0);
-                Integer count = Math.round(playerBag.getItemCount() * 0.2f);
-                playerBag.setItemCount(playerBag.getItemCount() - count);
-                if (playerBag.getItemCount() <= 0) {
+// 原物品数量
+                BigDecimal itemNum = new BigDecimal(playerBag.getItemCount().toString());
+// 乘以0.2，向下取整得到返还数量count
+                BigDecimal count = itemNum.multiply(new BigDecimal("0.2")).setScale(0, RoundingMode.FLOOR);
+
+// 扣除数量
+                BigDecimal remain = itemNum.subtract(count);
+                playerBag.setItemCount(remain);
+
+                if (remain.compareTo(BigDecimal.ZERO) <= 0) {
                     playerBag.setIsDelete("0");
                 }
                 PveReward pveReward = new PveReward();
@@ -8813,7 +9171,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 pveReward.setImg(gameItemBase.getIcon());
                 pveReward.setItemName(gameItemBase.getItemName() + " " + count);
                 pveReward.setItemId(gameItemBase.getItemId());
-                pveReward.setRewardAmount(count);
+                pveReward.setRewardAmount(count.intValue());
                 pveReward.setRewardType("6");
                 pveRewards.add(pveReward);
                 gamePlayerBagMapper.updateById(playerBag);
@@ -8823,7 +9181,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 pillRobRecord.setRobTime(new Date());
                 pillRobRecord.setRobDate(new Date());
                 pillRobRecord.setRobResult(1);
-                pillRobRecord.setRobPillNum(count);
+                pillRobRecord.setRobPillNum(count.intValue());
                 pillRobRecord.setRobMaterial(token.getStr());
                 pillRobRecord.setCreateTime(new Date());
                 pillRobRecord.setFreeRobCount(1);
@@ -8832,7 +9190,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                 pillRobRecordMapper.insert(pillRobRecord);
                 if (Xtool.isNotNull(playerBagList2)) {
                     GamePlayerBag playerBag2 = playerBagList2.get(0);
-                    playerBag2.setItemCount(playerBag2.getItemCount() + count);
+                    playerBag2.setItemCount(playerBag2.getItemCount().add(count));
                     gamePlayerBagMapper.updateById(playerBag2);
                 } else {
                     GamePlayerBag playerBag2 = new GamePlayerBag();
@@ -8903,15 +9261,15 @@ public class GameServiceServiceImpl implements GameServiceService {
                 return baseResp;
             }
             GamePlayerBag playerBag = playerBagList.get(0);
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) < 0) {
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).compareTo(BigDecimal.ZERO) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             }
             int[] result = MaterialSynthesisUtil.calculate(Integer.parseInt(token.getStr()));
             // 扣减物品数量
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1] > 0) {
-                playerBag.setItemCount(playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1]);
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])).compareTo(BigDecimal.ZERO) > 0) {
+                playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])));
             } else {
                 playerBag.setIsDelete("1");
             }
@@ -8924,12 +9282,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             List<GamePlayerBag> playerBagList2 = gamePlayerBagMapper.selectByMap(itemMap2);
             if (Xtool.isNotNull(playerBagList2)) {
                 GamePlayerBag playerBag2 = playerBagList2.get(0);
-                playerBag2.setItemCount(playerBag2.getItemCount() + result[0]);
+                playerBag2.setItemCount(playerBag2.getItemCount().add(new BigDecimal(result[0])));
                 gamePlayerBagMapper.updateById(playerBag2);
             } else {
                 GamePlayerBag playerBag2 = new GamePlayerBag();
                 playerBag2.setUserId(Integer.parseInt(userId));
-                playerBag2.setItemCount(result[0]);
+                playerBag2.setItemCount(new BigDecimal(result[0]));
                 playerBag2.setGridIndex(1);
                 playerBag2.setItemId(23);
                 gamePlayerBagMapper.insert(playerBag2);
@@ -8946,15 +9304,15 @@ public class GameServiceServiceImpl implements GameServiceService {
                 return baseResp;
             }
             GamePlayerBag playerBag = playerBagList.get(0);
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) < 0) {
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).compareTo(BigDecimal.ZERO) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             }
             int[] result = MaterialSynthesisUtil.calculate(Integer.parseInt(token.getStr()));
             // 扣减物品数量
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1] > 0) {
-                playerBag.setItemCount(playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1]);
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])).compareTo(BigDecimal.ZERO) > 0) {
+                playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])));
             } else {
                 playerBag.setIsDelete("1");
             }
@@ -8967,12 +9325,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             List<GamePlayerBag> playerBagList2 = gamePlayerBagMapper.selectByMap(itemMap2);
             if (Xtool.isNotNull(playerBagList2)) {
                 GamePlayerBag playerBag2 = playerBagList2.get(0);
-                playerBag2.setItemCount(playerBag2.getItemCount() + result[0]);
+                playerBag2.setItemCount(playerBag2.getItemCount().add(new BigDecimal(result[0])));
                 gamePlayerBagMapper.updateById(playerBag2);
             } else {
                 GamePlayerBag playerBag2 = new GamePlayerBag();
                 playerBag2.setUserId(Integer.parseInt(userId));
-                playerBag2.setItemCount(result[0]);
+                playerBag2.setItemCount(new BigDecimal( result[0]));
                 playerBag2.setGridIndex(1);
                 playerBag2.setItemId(26);
                 gamePlayerBagMapper.insert(playerBag2);
@@ -8989,15 +9347,15 @@ public class GameServiceServiceImpl implements GameServiceService {
                 return baseResp;
             }
             GamePlayerBag playerBag = playerBagList.get(0);
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) < 0) {
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).compareTo(BigDecimal.ZERO) < 0) {
                 baseResp.setSuccess(0);
                 baseResp.setErrorMsg("材料不足");
                 return baseResp;
             }
             int[] result = MaterialSynthesisUtil.calculate(Integer.parseInt(token.getStr()));
             // 扣减物品数量
-            if (playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1] > 0) {
-                playerBag.setItemCount(playerBag.getItemCount() - Integer.parseInt(token.getStr()) + result[1]);
+            if (playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])).compareTo(BigDecimal.ZERO) > 0) {
+                playerBag.setItemCount(playerBag.getItemCount().subtract(new BigDecimal(token.getStr())).add(new BigDecimal(result[1])));
             } else {
                 playerBag.setIsDelete("1");
             }
@@ -9010,12 +9368,12 @@ public class GameServiceServiceImpl implements GameServiceService {
             List<GamePlayerBag> playerBagList2 = gamePlayerBagMapper.selectByMap(itemMap2);
             if (Xtool.isNotNull(playerBagList2)) {
                 GamePlayerBag playerBag2 = playerBagList2.get(0);
-                playerBag2.setItemCount(playerBag2.getItemCount() + result[0]);
+                playerBag2.setItemCount(playerBag2.getItemCount().add(new BigDecimal(result[0])));
                 gamePlayerBagMapper.updateById(playerBag2);
             } else {
                 GamePlayerBag playerBag2 = new GamePlayerBag();
                 playerBag2.setUserId(Integer.parseInt(userId));
-                playerBag2.setItemCount(result[0]);
+                playerBag2.setItemCount(new BigDecimal( result[0]));
                 playerBag2.setGridIndex(1);
                 playerBag2.setItemId(24);
                 gamePlayerBagMapper.insert(playerBag2);
@@ -9165,8 +9523,7 @@ public class GameServiceServiceImpl implements GameServiceService {
     public BaseResp videoList(TokenDto token, HttpServletRequest request) throws Exception {
         BaseResp baseResp = new BaseResp();
         String userId = token.getUserId();
-        List<GameFight> fightList = gameFightMapper.selectList(new LambdaQueryWrapper<GameFight>()
-                .eq(GameFight::getUserId, userId));
+        List<GameFight> fightList = gameFightMapper.getGameFightList(userId);
         for (GameFight gameFight : fightList) {
             gameFight.setTimeStr(this.formatTime(gameFight.getCreatetime()));
         }
@@ -9174,6 +9531,262 @@ public class GameServiceServiceImpl implements GameServiceService {
         baseResp.setData(fightList);
         return baseResp;
     }
+
+    @Override
+    public BaseResp bosList(TokenDto token, HttpServletRequest request) throws Exception {
+        //先获取当前用户战队
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        List<CraftEq> craftEqList = GameConfigCache.getAllCraftEqs();
+        List<Integer> itemIds=craftEqList.stream().filter(x->token.getStr().equals(x.getType())).map(x->x.getItemId()).collect(Collectors.toList());
+        if (Xtool.isNull(itemIds)){
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("暂未开放");
+            return baseResp;
+        }
+        List<GamePlayerBag> playerBags = gamePlayerBagMapper.selectList(new LambdaQueryWrapper<GamePlayerBag>()
+                .eq(GamePlayerBag::getUserId, Integer.parseInt(userId)).eq(GamePlayerBag::getIsDelete,0).in(GamePlayerBag::getItemId,itemIds));
+        List<GameEquipInlay> map = new ArrayList<>();
+        for (GamePlayerBag playerBag : playerBags) {
+            GameEquipInlay inlay=new GameEquipInlay();
+            inlay.setItemId(playerBag.getItemId());
+            inlay.setEquipUniqueId(Integer.parseInt(token.getId()));
+            inlay.setItemCount(playerBag.getItemCount());
+            List<CraftEq> craft=craftEqList.stream().filter(x->x.getItemId().equals(playerBag.getItemId())).collect(Collectors.toList());
+            if (Xtool.isNotNull(craft)){
+                inlay.setIcon(craft.get(0).getIcon());
+            }
+            inlay.setIsBind(false);
+            map.add(inlay);
+        }
+        LambdaQueryWrapper<GameEquipInlay> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(GameEquipInlay::getUserId, userId)
+                .eq(GameEquipInlay::getEquipUniqueId, token.getId())
+                .eq(GameEquipInlay::getSlotIndex, token.getFinalLevel())
+                .orderByAsc(GameEquipInlay::getSlotIndex);
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(wrapper);
+        for (GameEquipInlay inlay : inlayList) {
+            inlay.setIsBind(true);
+            inlay.setItemCount(BigDecimal.ZERO);
+        }
+        map.addAll(inlayList);
+        baseResp.setSuccess(1);
+        baseResp.setData(map);
+        return baseResp;
+    }
+
+    @Override
+    @Transactional
+    @NoRepeatSubmit(limitSeconds = 1)
+    public BaseResp toggleGem(TokenDto token, HttpServletRequest request) throws Exception {
+        //先获取当前用户战队
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        // 查询当前槽是否存在镶嵌记录
+        LambdaQueryWrapper<GameEquipInlay> inlayWrapper = new LambdaQueryWrapper<>();
+        inlayWrapper.eq(GameEquipInlay::getUserId, userId)
+                .eq(GameEquipInlay::getEquipUniqueId, token.getStr())
+                .eq(GameEquipInlay::getSlotIndex, token.getFinalLevel());
+        GameEquipInlay existInlay = gameEquipInlayMapper.selectOne(inlayWrapper);
+        List<CraftEq> craftEqList = GameConfigCache.getAllCraftEqs();
+        // ============ 卸下宝石 ============
+        if (existInlay != null) {
+            // 校验宝石ID，防止恶意请求
+            if (!(existInlay.getItemId()+"").equals(token.getId())) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("槽位宝石不匹配");
+                return baseResp;
+            }
+            // 删除镶嵌记录
+            gameEquipInlayMapper.deleteById(existInlay.getId());
+            Map itemMap = new HashMap();
+            itemMap.put("item_id", token.getId());
+            itemMap.put("user_id", userId);
+            itemMap.put("is_delete", "0");
+            List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
+            if (Xtool.isNotNull(playerBagList)) {
+                GamePlayerBag playerBag = playerBagList.get(0);
+                playerBag.setItemCount(playerBag.getItemCount().add(BigDecimal.ONE));
+                gamePlayerBagMapper.updateById(playerBag);
+            } else {
+                GamePlayerBag playerBag = new GamePlayerBag();
+                playerBag.setUserId(Integer.parseInt(userId));
+                playerBag.setItemCount(BigDecimal.ONE);
+                playerBag.setGridIndex(1);
+                playerBag.setItemId(Integer.parseInt(token.getId()));
+                gamePlayerBagMapper.insert(playerBag);
+            }
+        }else {
+            Map itemMap = new HashMap();
+            itemMap.put("item_id", token.getId());
+            itemMap.put("user_id", userId);
+            itemMap.put("is_delete", "0");
+            List<GamePlayerBag> playerBagList = gamePlayerBagMapper.selectByMap(itemMap);
+            if (Xtool.isNull(playerBagList)) {
+                baseResp.setSuccess(0);
+                baseResp.setErrorMsg("宝石不足");
+                return baseResp;
+            }
+
+            // 查询背包宝石，获取extraAttr存入镶嵌记录
+            // 扣减物品数量
+            GamePlayerBag gamePlayerBag = playerBagList.get(0);
+            if (gamePlayerBag.getItemCount().subtract(BigDecimal.ONE).compareTo(BigDecimal.ZERO) > 0) {
+                gamePlayerBag.setItemCount(gamePlayerBag.getItemCount().subtract(BigDecimal.ONE));
+            } else {
+                gamePlayerBag.setIsDelete("1");
+            }
+            gamePlayerBagMapper.updateById(gamePlayerBag);
+
+            GameEquipInlay inlay = new GameEquipInlay();
+            inlay.setUserId(Integer.parseInt(userId));
+            inlay.setEquipUniqueId(Integer.parseInt(token.getStr()));
+            inlay.setSlotIndex(token.getFinalLevel());
+            inlay.setItemId(Integer.parseInt(token.getId()));
+            List<CraftEq> craft=craftEqList.stream().filter(x->(x.getItemId()+"").equals(token.getId())).collect(Collectors.toList());
+            if (Xtool.isNotNull(craft)){
+                inlay.setIcon(craft.get(0).getIcon());
+            }
+            gameEquipInlayMapper.insert(inlay);
+        }
+        List<EqCharacters> eqCharactersList = eqCharactersMapper.selectByUserId(Integer.parseInt(userId));
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, Integer.parseInt(userId)));
+        for (EqCharacters eqCharacters : eqCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
+        baseResp.setData(eqCharactersList);
+        baseResp.setSuccess(1);
+        baseResp.setErrorMsg("更新成功");
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp savePlay(TokenDto token, HttpServletRequest request) throws Exception {
+        //先获取当前用户战队
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        User user = userMapper.selectUserByUserId(Integer.parseInt(userId));
+        BigDecimal diamond = user.getDiamond().subtract(new BigDecimal(100));
+        if (diamond.compareTo(BigDecimal.ZERO) < 0) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("灵石不足");
+            return baseResp;
+        }
+        user.setDiamond(diamond);
+        GameFight gameFight = new GameFight();
+        gameFight.setUserId(Integer.parseInt(userId));
+        gameFight.setUserName(token.getToken());
+        gameFight.setToUserName(token.getDifficultyLevel());
+        gameFight.setIsWin(token.getFinalLevel());
+        gameFight.setFightter(token.getStr());
+        gameFight.setCreatetime(new Date());
+        gameFight.setId(token.getId());
+        gameFightMapper.insert(gameFight);
+        userMapper.updateuser(user);
+        baseResp.setSuccess(1);
+        UserInfo info = new UserInfo();
+        BeanUtils.copyProperties(user, info);
+        baseResp.setData(info);
+        baseResp.setSuccess(1);
+        baseResp.setErrorMsg("留影成功");
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp deleteVideo(TokenDto token, HttpServletRequest request) throws Exception {
+        BaseResp baseResp = new BaseResp();
+        if (token == null || Xtool.isNull(token.getToken())) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+//        String userId = (String) redisTemplate.opsForValue().get(token.getToken());
+        String userId = token.getUserId();
+        if (Xtool.isNull(userId)) {
+            baseResp.setSuccess(0);
+            baseResp.setErrorMsg("登录过期");
+            return baseResp;
+        }
+        gameFightMapper.delete(new LambdaQueryWrapper<GameFight>()
+                .eq(GameFight::getId, token.getId()).eq(GameFight::getUserId, Integer.parseInt(userId)));
+        baseResp.setSuccess(1);
+        baseResp.setErrorMsg("删除成功");
+        return baseResp;
+    }
+
+    @Override
+    public BaseResp saveChatMsg(ChatMsg chatMsg) {
+        BaseResp baseResp = new BaseResp();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        chatMsg.setSendTime(sdf.format(new Date()));
+        SensitiveWord sw = new SensitiveWord("CensorWords.txt");
+        sw.InitializationWork();
+        String content = sw.filterInfo(chatMsg.getContent());
+        chatMsg.setContent(content);
+        String key = buildChannelKey(chatMsg.getChannelType(), chatMsg.getSenderId(), chatMsg.getTargetId());
+        // 手动转JSON字符串存入List
+        String jsonStr = JsonUtils.toJson(chatMsg);
+        redisTemplate.opsForList().leftPush(key, jsonStr);
+        // 只保留100条
+        redisTemplate.opsForList().trim(key, 0, 99);
+        baseResp.setSuccess(1);
+        return baseResp;
+    }
+
+    // 构造频道Redis Key
+    private String buildChannelKey(Integer channelType, Long senderId, Long targetId) {
+        switch (channelType) {
+            case 1:
+                // 世界频道统一key
+                return "chat:channel:world";
+            case 2:
+                // 洞府频道 targetId=洞府ID
+                return "chat:channel:cave:" + targetId;
+            case 3:
+                // 私聊 取大小ID统一key
+                long min = Math.min(senderId, targetId);
+                long max = Math.max(senderId, targetId);
+                return "chat:channel:single:" + min + ":" + max;
+            default:
+                throw new RuntimeException("未知聊天频道");
+        }
+    }
+
 
     @Override
     public BaseResp friendAllList(TokenDto token, HttpServletRequest request) throws Exception {
@@ -9431,6 +10044,13 @@ public class GameServiceServiceImpl implements GameServiceService {
             BigDecimal maxHp = lv.multiply(characters.getHpGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
             BigDecimal attack = lv.multiply(characters.getAttackGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
             BigDecimal speed = lv.multiply(characters.getSpeedGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
+            // 飞升加成：每级flyup增加3%属性
+            if (Xtool.isNotNull(characters.getFlyup())){
+                BigDecimal flyupRate = new BigDecimal("1").add(new BigDecimal(characters.getFlyup()).multiply(new BigDecimal("0.03")));
+                maxHp = maxHp.multiply(flyupRate);
+                attack = attack.multiply(flyupRate);
+                speed = speed.multiply(flyupRate);
+            }
             character.setMaxHp(maxHp.intValue());
             character.setHp(maxHp.intValue());
             character.setAttack(attack.intValue());
@@ -9450,6 +10070,13 @@ public class GameServiceServiceImpl implements GameServiceService {
         BigDecimal maxHp = lv.multiply(characters.getHpGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
         BigDecimal attack = lv.multiply(characters.getAttackGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
         BigDecimal speed = lv.multiply(characters.getSpeedGrowth().multiply(((characters.getStar().subtract(new BigDecimal(1))).multiply(new BigDecimal("0.15")).add(new BigDecimal(1))).multiply((lv.divide(new BigDecimal(80)).add(new BigDecimal("0.8"))))));
+        // 飞升加成：每级flyup增加3%属性
+        if (Xtool.isNotNull(characters.getFlyup())){
+            BigDecimal flyupRate = new BigDecimal("1").add(new BigDecimal(characters.getFlyup()).multiply(new BigDecimal("0.03")));
+            maxHp = maxHp.multiply(flyupRate);
+            attack = attack.multiply(flyupRate);
+            speed = speed.multiply(flyupRate);
+        }
         character.setHp(maxHp.intValue());
         character.setStar(characters.getStar());
         character.setMaxHp(maxHp.intValue());
@@ -9464,9 +10091,98 @@ public class GameServiceServiceImpl implements GameServiceService {
         character.setDsDef(0);
         character.setFdDef(0);
         character.setZlDef(0);
+        character.setZlAtk(0);
         //TODO 装备属性
         if (Xtool.isNotNull(characters.getEqCharactersList())) {
             List<EqCharacters> eqCharacters = characters.getEqCharactersList();
+            List<CraftEq> craftEqList = GameConfigCache.getAllCraftEqs();
+            for (EqCharacters eqCharacter : eqCharacters) {
+                if (Xtool.isNotNull(eqCharacter.getGemList())){
+                    List<GameEquipInlay> gemList=eqCharacter.getGemList();
+                    if (eqCharacter.getWlAtk()>0){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=88).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        eqCharacter.setWlAtk((int) Math.round(eqCharacter.getWlAtk() * rate));
+                    }
+                    if (1==1){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=248&&gem.getItemId()>88).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        if (eqCharacter.getHyDef()>0){
+                            eqCharacter.setHyDef((int) Math.round(eqCharacter.getHyDef() * rate));
+                        }
+                        if (eqCharacter.getDsDef()>0){
+                            eqCharacter.setDsDef((int) Math.round(eqCharacter.getDsDef() * rate));
+                        }
+                    }
+                    if (1==1){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=298&&gem.getItemId()>248).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        if (eqCharacter.getHyAtk()>0){
+                            eqCharacter.setHyAtk((int) Math.round(eqCharacter.getHyAtk() * rate));
+                        }
+                        if (eqCharacter.getDsAtk()>0){
+                            eqCharacter.setDsAtk((int) Math.round(eqCharacter.getDsAtk() * rate));
+                        }
+                    }
+                    if (eqCharacter.getZlDef()>0){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=348&&gem.getItemId()>298).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        eqCharacter.setZlDef((int) Math.round(eqCharacter.getZlDef() * rate));
+                    }
+                    if (eqCharacter.getWlDef()>0){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=398&&gem.getItemId()>348).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        eqCharacter.setWlDef((int) Math.round(eqCharacter.getWlDef() * rate));
+                    }
+                    if (eqCharacter.getZlAtk()>0){
+                        List<Integer> itemIds = gemList.stream()
+                                .filter(gem -> gem.getItemId()<=448&&gem.getItemId()>398).map(GameEquipInlay::getItemId)
+                                .collect(Collectors.toList());
+                        // 当前装备上所有太阳石总等级
+                        int gemLv = craftEqList.stream()
+                                .filter(inlay -> itemIds.contains(inlay.getItemId()))
+                                .mapToInt(CraftEq::getLevel)
+                                .sum();
+                        double rate = 1 + gemLv * 0.01;
+                        eqCharacter.setZlAtk((int) Math.round(eqCharacter.getZlAtk() * rate));
+                    }
+                }
+            }
             //攻击
             character.setWlAtk(eqCharacters.stream().map(EqCharacters::getWlAtk).mapToInt(wlAtk -> Objects.isNull(wlAtk) ? 0 : wlAtk).sum());
             character.setAttack(character.getAttack() + character.getWlAtk());
@@ -9478,6 +10194,7 @@ public class GameServiceServiceImpl implements GameServiceService {
             character.setDsDef(eqCharacters.stream().map(EqCharacters::getDsDef).mapToInt(dsDef -> Objects.isNull(dsDef) ? 0 : dsDef).sum());
             character.setFdDef(eqCharacters.stream().map(EqCharacters::getFdDef).mapToInt(fdDef -> Objects.isNull(fdDef) ? 0 : fdDef).sum());
             character.setZlDef(eqCharacters.stream().map(EqCharacters::getZlDef).mapToInt(zlDef -> Objects.isNull(zlDef) ? 0 : zlDef).sum());
+            character.setZlAtk(eqCharacters.stream().map(EqCharacters::getZlAtk).mapToInt(zlAtk -> Objects.isNull(zlAtk) ? 0 : zlAtk).sum());
         }
         //TODO 再叠加协同属性
         if (Xtool.isNotNull(charactersList)) {
@@ -9755,6 +10472,12 @@ public class GameServiceServiceImpl implements GameServiceService {
         List<Characters> characterList = charactersMapper.selectByUserId(user.getUserId());
         info.setCharacterList(formateCharacter(characterList));
         List<EqCharacters> nowCharactersList = eqCharactersMapper.selectByUserId(Integer.parseInt(userId));
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, userId));
+        for (EqCharacters eqCharacters : nowCharactersList) {
+            List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters.getUuid()+"")).collect(Collectors.toList());
+            eqCharacters.setGemList(gemList);
+        }
         info.setEqCharactersList(nowCharactersList);
         baseResp.setData(info);
         baseResp.setErrorMsg("更新成功");
@@ -9803,6 +10526,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     character.getDsDef(),
                     character.getFdDef(),
                     character.getZlDef(),
+                    character.getZlAtk(),
                     Xtool.isNotNull(characters.getFlyup()) ? characters.getFlyup() : 0, characters.getSex()));
             character.setUuid("A" + character.getId());
             copyCampA.add(character);
@@ -9823,6 +10547,7 @@ public class GameServiceServiceImpl implements GameServiceService {
                     character.getDsDef(),
                     character.getFdDef(),
                     character.getZlDef(),
+                    character.getZlAtk(),
                     Xtool.isNotNull(characters.getFlyup()) ? characters.getFlyup() : 0, characters.getSex()));
             character.setUuid("B" + character.getId());
             copyCampB.add(character);
@@ -11368,7 +12093,17 @@ public class GameServiceServiceImpl implements GameServiceService {
             }
 
             log.debug("成功读取战斗日志文件: {}", fileName);
-            return content.toString();
+            String fileContent = content.toString();
+
+            // 如果文件内容为空，查询数据库
+            if (Xtool.isNull(fileContent)) {
+                List<GameFight> gameFight = gameFightMapper.selectList(new LambdaQueryWrapper<GameFight>().eq(GameFight::getId, Long.parseLong(battleId)));
+                if(Xtool.isNotNull(gameFight)){
+                    fileContent=gameFight.get(0).getFightter();
+                }
+            }
+
+            return fileContent;
         } catch (IOException e) {
             log.error("读取战斗日志文件失败，battleId: {}", battleId, e);
             return null;
@@ -11516,8 +12251,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             baseResp.setErrorMsg("你没有配置战队无法战斗");
             return baseResp;
         }
+        List<GameEquipInlay> inlayList2 = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user.getUserId()));
         for (Characters characters : leftCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList2.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }
@@ -11549,8 +12290,14 @@ public class GameServiceServiceImpl implements GameServiceService {
             characters.setMaxLv(CardMaxLevelUtils.getMaxLevel(card.getName(), card.getStar().doubleValue()));
             rightCharacter.add(characters);
         }
+        List<GameEquipInlay> inlayList = gameEquipInlayMapper.selectList(new LambdaQueryWrapper<GameEquipInlay>()
+                .eq(GameEquipInlay::getUserId, user1.getUserId()));
         for (Characters characters : rightCharacter) {
             List<EqCharacters> eqCharacters = eqCharactersMapper.listByGoOn(user1.getUserId() + "", characters.getId());
+            for (EqCharacters eqCharacters1 : eqCharacters) {
+                List<GameEquipInlay> gemList = inlayList.stream().filter(x->(x.getEquipUniqueId()+"").equals(eqCharacters1.getUuid()+"")).collect(Collectors.toList());
+                eqCharacters1.setGemList(gemList);
+            }
             if (Xtool.isNotNull(eqCharacters)) {
                 characters.setEqCharactersList(formateEqCharacter(eqCharacters));
             }

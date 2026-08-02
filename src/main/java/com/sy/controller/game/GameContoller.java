@@ -1,13 +1,20 @@
 package com.sy.controller.game;
 
 import com.sy.model.User;
+import com.sy.model.game.ChatMsg;
+import com.sy.model.game.GiftListItemVO;
+import com.sy.model.game.LevelUpResult;
 import com.sy.model.game.TokenDto;
 import com.sy.model.resp.BaseResp;
 import com.sy.service.GameServiceService;
+import com.sy.tool.NoRepeatSubmit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 
 @RestController
 public class GameContoller {
@@ -152,6 +159,20 @@ public class GameContoller {
         BaseResp baseResp = new BaseResp();
         try {
             baseResp = gameServiceService.characteSell(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
+    @RequestMapping(value = "characterCS", method = RequestMethod.POST)
+    @CrossOrigin
+    public BaseResp characterCS(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.characterCS(token, request);
             return baseResp;
         } catch (Exception e) {
             e.printStackTrace();
@@ -783,7 +804,7 @@ public class GameContoller {
     }
 
     /**
-     * 夺取
+     * 夺取，抢夺
      *
      * @param token
      * @param request
@@ -1736,6 +1757,21 @@ public class GameContoller {
         }
     }
 
+    //发送手机验证码
+    @PostMapping("sendVerificationMobileCode")
+    @CrossOrigin
+    public BaseResp mobilecode(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.mobilecode(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+
     @PostMapping("getUserMine")
     @CrossOrigin
     public BaseResp getUserMine(@RequestBody TokenDto token, HttpServletRequest request) {
@@ -1868,5 +1904,97 @@ public class GameContoller {
             return baseResp;
         }
     }
+    /**
+     * 留影
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("savePlay")
+    @CrossOrigin
+    public BaseResp savePlay(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.savePlay(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+    /**
+     * 留影
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("deleteVideo")
+    @CrossOrigin
+    public BaseResp deleteVideo(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.deleteVideo(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+    // 保存消息存入Redis
+    @PostMapping("chatMsgSave")
+    @CrossOrigin
+    public BaseResp saveChatMsg(@RequestBody ChatMsg chatMsg) {
+        BaseResp baseResp = new BaseResp();
+        try {
+//            chatMsg.setMsgId(System.currentTimeMillis());
+            baseResp= gameServiceService.saveChatMsg(chatMsg);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
 
+    }
+
+    /**
+     * 宝石列表
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("bosList")
+    @CrossOrigin
+    public BaseResp bosList(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.bosList(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
+    /**
+     * 宝石列表
+     * @param token
+     * @param request
+     * @return
+     */
+    @PostMapping("toggleGem")
+    @CrossOrigin
+    public BaseResp toggleGem(@RequestBody TokenDto token, HttpServletRequest request) {
+        BaseResp baseResp = new BaseResp();
+        try {
+            baseResp = gameServiceService.toggleGem(token, request);
+            return baseResp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            baseResp.setSuccess(0);
+            return baseResp;
+        }
+    }
 }

@@ -172,7 +172,7 @@ public class BattleManager {
             Guardian baisuzhen = baisuzhens.get(0);
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().doubleValue());
 //            白素贞， 水漫金山Lv1减免自身收到火焰伤害10%；
-            baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId());
+            baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId(),true);
 
         }
 
@@ -181,7 +181,7 @@ public class BattleManager {
             Guardian baisuzhen = baisuzhens2.get(0);
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(baisuzhen.getLevel(), baisuzhen.getStar().doubleValue());
 //            白素贞， 水漫金山Lv1减免自身收到火焰伤害10%；
-            baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId());
+            baisuzhen.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[0] * 10, 990, baisuzhen.getId(),true);
 
         }
 
@@ -193,7 +193,7 @@ public class BattleManager {
             if (skillLevel[1] > 0) {
 //                五岳庇护Lv1光环-减少我方全体受到的火焰伤害20点
                 for (Guardian guardian : this.campA) {
-                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST, skillLevel[0] * 20, 990, guardian.getId());
+                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST, skillLevel[0] * 20, 990, guardian.getId(),true);
                 }
             }
 
@@ -206,7 +206,7 @@ public class BattleManager {
             if (skillLevel[1] > 0) {
 //                五岳庇护Lv1光环-减少我方全体受到的火焰伤害20点
                 for (Guardian guardian : this.campB) {
-                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST, skillLevel[0] * 20, 990, guardian.getId());
+                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST, skillLevel[0] * 20, 990, guardian.getId(),true);
                 }
             }
 
@@ -218,7 +218,7 @@ public class BattleManager {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().doubleValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             if (skillLevel[1] > 0) {
-                qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId());
+                qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId(),true);
 
             }
         }
@@ -229,7 +229,7 @@ public class BattleManager {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(qumozhenjun.getLevel(), qumozhenjun.getStar().doubleValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
             if (skillLevel[1] > 0) {
-                qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId());
+                qumozhenjun.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[1] * 10, 990, qumozhenjun.getId(),true);
 
             }
         }
@@ -239,7 +239,7 @@ public class BattleManager {
             Guardian jingjiashen = jingjiashens.get(0);
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().doubleValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
-            jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId());
+            jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId(),true);
         }
 
         List<Guardian> jingjiashens2 = this.campA.stream().filter(g -> g.getName().equals("金甲神") && !g.isDead()).collect(Collectors.toList());
@@ -247,7 +247,7 @@ public class BattleManager {
             Guardian jingjiashen = jingjiashens2.get(0);
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(jingjiashen.getLevel(), jingjiashen.getStar().doubleValue());
 //            顽强体魄Lv1受到治疗的效果提升10%。
-            jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId());
+            jingjiashen.addEffect(EffectType.HEAL_BOOST_PRET, skillLevel[0] * 5, 990, jingjiashen.getId(),true);
         }
 
         List<Guardian> nezhas = this.campB.stream().filter(g -> g.getName().equals("哪吒") && !g.isDead()).collect(Collectors.toList());
@@ -256,9 +256,9 @@ public class BattleManager {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().doubleValue());
             if (skillLevel[1] > 0) {
 //                莲花圣体Lv1减免受到的火焰伤害、毒素伤害、飞弹伤害各10%；
-                nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
-                nezha.addEffect(EffectType.POISON_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
-                nezha.addEffect(EffectType.MISSILE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
+                nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
+                nezha.addEffect(EffectType.POISON_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
+                nezha.addEffect(EffectType.MISSILE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
             }
 
 
@@ -270,9 +270,9 @@ public class BattleManager {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(nezha.getLevel(), nezha.getStar().doubleValue());
             if (skillLevel[1] > 0) {
 //                莲花圣体Lv1减免受到的火焰伤害、毒素伤害、飞弹伤害各10%；
-                nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
-                nezha.addEffect(EffectType.POISON_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
-                nezha.addEffect(EffectType.MISSILE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId());
+                nezha.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
+                nezha.addEffect(EffectType.POISON_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
+                nezha.addEffect(EffectType.MISSILE_RESIST_BOOST_PRET, skillLevel[1] * 10, 990, nezha.getId(),true);
             }
 
         }
@@ -285,7 +285,7 @@ public class BattleManager {
             if (skillLevel[1] > 0) {
 //                防火阵法Lv1光环-我方全体增加火焰减伤50%；
                 for (Guardian guardian : this.campA) {
-                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, 50, 990, guardian.getId());
+                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, 50, 990, guardian.getId(),true);
                 }
             }
 
@@ -298,7 +298,7 @@ public class BattleManager {
             if (skillLevel[1] > 0) {
 //               防火阵法Lv1光环-我方全体增加火焰减伤50%；
                 for (Guardian guardian : this.campB) {
-                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, 50, 990, guardian.getId());
+                    guardian.addEffect(EffectType.FIRE_RESIST_BOOST_PRET, 50, 990, guardian.getId(),true);
                 }
             }
 
@@ -439,7 +439,7 @@ public class BattleManager {
         if (fieldA != null && !fieldA.isDead() && fieldA.getName().equals("托塔天王")) {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().doubleValue());
             if (skillLevel[1] > 0) {
-                int heal = 25 * skillLevel[1];
+                int heal = 25 * skillLevel[1]+ fieldA.getZlAtk();
                 fieldA.setCurrentHp(fieldA.getCurrentHp() + heal);
                 addLog("仙塔庇护",
                         fieldA.getId(),
@@ -458,7 +458,7 @@ public class BattleManager {
         if (fieldB != null && !fieldB.isDead() && fieldB.getName().equals("托塔天王")) {
             int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().doubleValue());
             if (skillLevel[1] > 0) {
-                int heal = 25 * skillLevel[1];
+                int heal = 25 * skillLevel[1]+ fieldB.getZlAtk();
                 fieldB.setCurrentHp(fieldB.getCurrentHp() + heal);
 
                 addLog("仙塔庇护",
@@ -473,6 +473,51 @@ public class BattleManager {
                         "+" + heal);
             }
 
+        }
+        if (1==1){
+            Guardian guardian=campA.stream().filter(g->g.getName().equals("玄武")&&!g.isDead()).findFirst().orElse(null);
+            // 托塔天王仙塔庇护
+            if (guardian != null) {
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                if (skillLevel[1] > 0) {
+                    int heal = (int)(guardian.getMaxHp()*0.4);
+                    guardian.setCurrentHp(guardian.getCurrentHp() + heal);
+                    addLog("愈合",
+                            guardian.getId(),
+                            guardian.getMaxHp(), guardian.getCurrentHp(),
+                            heal,
+                            guardian.isOnField(),
+                            guardian.getId(),
+                            guardian.getMaxHp(), guardian.getCurrentHp(),
+                            heal, guardian.isOnField(), EffectType.HEAL,
+                            DamageType.MAGIC,
+                            "+" + heal);
+                }
+
+            }
+        }
+
+        if (1==1){
+            Guardian guardian=campB.stream().filter(g->g.getName().equals("玄武")&&!g.isDead()).findFirst().orElse(null);
+            // 托塔天王仙塔庇护
+            if (guardian != null) {
+                int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                if (skillLevel[1] > 0) {
+                    int heal = (int)(guardian.getMaxHp()*0.4);
+                    guardian.setCurrentHp(guardian.getCurrentHp() + heal);
+                    addLog("愈合",
+                            guardian.getId(),
+                            guardian.getMaxHp(), guardian.getCurrentHp(),
+                            heal,
+                            guardian.isOnField(),
+                            guardian.getId(),
+                            guardian.getMaxHp(), guardian.getCurrentHp(),
+                            heal, guardian.isOnField(), EffectType.HEAL,
+                            DamageType.MAGIC,
+                            "+" + heal);
+                }
+
+            }
         }
         List<Guardian> allUnits = new ArrayList<>();
         allUnits.addAll(campA);
@@ -666,6 +711,57 @@ public class BattleManager {
                     break;
             }
             //触发场下技能
+        List<Guardian> defenders = defender.getCamp() == Camp.A ?
+                campA.stream().filter(g -> !g.isDead()&&g.getName().equals("玄武")).collect(Collectors.toList()) :
+                campB.stream().filter(g -> !g.isDead()&&g.getName().equals("玄武")).collect(Collectors.toList());
+            if (Xtool.isNotNull(defenders)&&!defender.getName().equals("玄武")&&effectType == EffectType.DAMAGE && defender.isOnField()){
+                Guardian guardian=defenders.get(0);
+                int[] skillLevelC = CardSkillLevelUtil.calculateSkillLevels(guardian.getLevel(), guardian.getStar().doubleValue());
+                if (skillLevelC[1]>0){
+                    guardian.setCurrentHp(guardian.getCurrentHp() - burnDamage);
+                    addLog("守卫",
+                            guardian.getId(),
+                            guardian.getMaxHp(),
+                            guardian.getCurrentHp(),
+                            0,
+                            guardian.isOnField(),
+                            guardian.getId(),
+                            guardian.getMaxHp(),
+                            guardian.getCurrentHp(),
+                            burnDamage,
+                            guardian.isOnField(),
+                            EffectType.DAMAGE,
+                            DamageType.TRUE,
+                            "-" + burnDamage);
+                    Map<String, TargetBattleData> deadUnits = new HashMap<>();
+
+                    if (guardian.getCurrentHp() <= 0) {
+                        guardian.setDead(true);
+                        guardian.setOnField(false);
+                        TargetBattleData data = new TargetBattleData(guardian.getMaxHp(), guardian.getCurrentHp(), burnDamage, guardian.isOnField());
+                        deadUnits.put(guardian.getId(), data);
+                    }
+                    // 死亡日志
+                    if (!deadUnits.isEmpty()) {
+                        addMultiTargetLog("UNIT_DEATH",
+                                null,
+                                0,
+                                0,
+                                false,
+                                deadUnits,
+                                null,
+                                null,
+                                "死亡");
+                        //触发死亡技能
+                        triggerOnDeathSkills(guardian);
+
+                    } else {
+                        //触发受击技能
+                        triggerOnAttackedSkills(guardian, defender);
+                    }
+                    burnDamage=0;
+                }
+            }
 
         return burnDamage;
     }
@@ -998,7 +1094,7 @@ public class BattleManager {
                 if (1 == 1) {
                     Guardian enemy = guardian.getCamp() == Camp.A ? fieldB : fieldA;
                     if (enemy != null) {
-                        int damage = (int) (enemy.getCurrentHp() * 0.04 * skillLevel[0]);
+                        int damage = (int) (enemy.getMaxHp() * 0.04 * skillLevel[0]);
                         Integer logIndex=battleLogs.size();
                         damage=triggerOnAttackedSkills(enemy,damage,EffectType.DAMAGE);
                         enemy.setCurrentHp(enemy.getCurrentHp() - damage);
@@ -1021,7 +1117,7 @@ public class BattleManager {
                 break;
             case "齐天大圣":
                 // 大圣降临：回复自身20%生命
-                int heal = (int) (guardian.getMaxHp() * 0.2 * skillLevel[0]);
+                int heal = (int) (guardian.getMaxHp() * 0.2 * skillLevel[0])+guardian.getZlAtk();
                 guardian.setCurrentHp(guardian.getCurrentHp() + heal);
                 addLog("大圣降临",
                         guardian.getId(),
@@ -1082,32 +1178,33 @@ public class BattleManager {
                     case "托塔天王":
                         // 镇妖塔：对敌方场上造成飞弹伤害
                         if (guardian1 != null) {
+                            int[] skillLevell = CardSkillLevelUtil.calculateSkillLevels(enemy.getLevel(), enemy.getStar().doubleValue());
                             // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
-                            int totalPoisonDamage = 69 * skillLevel[1];
+                            int totalPoisonDamage = 69 * skillLevell[0];
                             // 2. 计算毒抗相关（直接基于你现有 EffectInstance 计算，不新增 Guardian 方法）
                             // 飞弹增益：所有 POISON_RESIST 类型效果的 value 总和
-                            int resistUp = calculateTotalVaule(guardian1, EffectType.MISSILE_BOOST);
+                            int resistUp = calculateTotalVaule(enemy, EffectType.MISSILE_BOOST);
                             // 飞弹增益百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double resistUpPret = calculateTotalUpPretVaule(guardian1, EffectType.MISSILE_BOOST_PRET);
+                            double resistUpPret = calculateTotalUpPretVaule(enemy, EffectType.MISSILE_BOOST_PRET);
                             // 飞弹降低：所有 POISON_RESIST_DOWN 类型效果的 value 总和
-                            int resistDown = calculateTotalVaule(guardian1, EffectType.MISSILE_DOWN);
+                            int resistDown = calculateTotalVaule(enemy, EffectType.MISSILE_DOWN);
                             // 飞弹降低百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double resistDownPret = calculateTotalDownPretVaule(guardian1, EffectType.MISSILE_DOWN_PRET);
+                            double resistDownPret = calculateTotalDownPretVaule(enemy, EffectType.MISSILE_DOWN_PRET);
 
 
                             // 2. 计算毒抗相关（直接基于你现有 EffectInstance 计算，不新增 Guardian 方法）
                             // 弹抗增益：所有 POISON_RESIST 类型效果的 value 总和
-                            int targetUp = calculateTotalVaule(enemy, EffectType.MISSILE_RESIST_BOOST);
+                            int targetUp = calculateTotalVaule(guardian1, EffectType.MISSILE_RESIST_BOOST);
                             // 弹抗增益百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double targetUpPret = calculateTotalDownPretVaule(enemy, EffectType.MISSILE_RESIST_BOOST_PRET);
+                            double targetUpPret = calculateTotalDownPretVaule(guardian1, EffectType.MISSILE_RESIST_BOOST_PRET);
                             // 弹抗降低：所有 POISON_RESIST_DOWN 类型效果的 value 总和
-                            int targetDown = calculateTotalVaule(enemy, EffectType.MISSILE_RESIST_DOWN);
+                            int targetDown = calculateTotalVaule(guardian1, EffectType.MISSILE_RESIST_DOWN);
                             // 弹抗降低百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double targetDownPret = calculateTotalUpPretVaule(enemy, EffectType.MISSILE_RESIST_DOWN_PRET);
+                            double targetDownPret = calculateTotalUpPretVaule(guardian1, EffectType.MISSILE_RESIST_DOWN_PRET);
                             // 最终（仅基于 buff 计算，无新增方法）
 
                             int burnDamage = (int) (totalPoisonDamage * resistUpPret * resistDownPret * targetUpPret * targetDownPret
-                                    + (resistUp - resistDown + guardian1.getFdAtk() - enemy.getFdDef() - targetUp + targetDown));
+                                    + (resistUp - resistDown + enemy.getFdAtk() - guardian1.getFdDef() - targetUp + targetDown));
 
                             if (burnDamage < 0) {
                                 burnDamage = 0;
@@ -1115,7 +1212,7 @@ public class BattleManager {
                             Integer logIndex=battleLogs.size();
                             burnDamage=triggerOnAttackedSkills(guardian1,burnDamage,EffectType.MISSILE_DAMAGE);
                             // 4. 扣除伤害
-                            enemy.setCurrentHp(enemy.getCurrentHp() - burnDamage);
+                            guardian1.setCurrentHp(guardian1.getCurrentHp() - burnDamage);
                             addLog("镇妖塔",
                                     enemy.getId(),
                                     enemy.getMaxHp(),
@@ -1252,30 +1349,32 @@ public class BattleManager {
                                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                                     enemies.forEach(g -> {
-                                        g.remove(EffectType.HP_RECOVER);
-                                        g.remove(EffectType.HEAL_BOOST);
-                                        g.remove(EffectType.HEAL_BOOST_PRET);
-                                        g.remove(EffectType.XU_HEAL_BOOST);
-                                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                                        g.remove(EffectType.ATTACK_UP);
-                                        g.remove(EffectType.ATTACK_UP_PRET);
-                                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.FIRE_DOWN);
-                                        g.remove(EffectType.FIRE_DOWN_PRET);
-                                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.POISON_DOWN);
-                                        g.remove(EffectType.POISON_RESIST_BOOST);
-                                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.MISSILE_DOWN);
-                                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.HP_UP);
-                                        g.remove(EffectType.HP_UP_PRET);
-                                        g.remove(EffectType.SPEED_UP);
-                                        g.remove(EffectType.SPEED_UP_PRET);
+                                        // 修改：只移除isSkill=false的效果实例
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
+
                                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                                         targetStatus.put(g.getId(), data);
                                     });
@@ -1303,32 +1402,33 @@ public class BattleManager {
                     case "托塔天王":
                         // 镇妖塔：对敌方场上造成飞弹伤害
                         if (guardian2 != null) {
+                            int[] skillLevell = CardSkillLevelUtil.calculateSkillLevels(enemy.getLevel(), enemy.getStar().doubleValue());
                             // 1. 计算所有中毒效果的总伤害（累加 POISON 类型的 value）
-                            int totalPoisonDamage = 69 * skillLevel2[1];
+                            int totalPoisonDamage = 69 * skillLevell[0];
                             // 2. 计算毒抗相关（直接基于你现有 EffectInstance 计算，不新增 Guardian 方法）
                             // 飞弹增益：所有 POISON_RESIST 类型效果的 value 总和
-                            int resistUp = calculateTotalVaule(guardian2, EffectType.MISSILE_BOOST);
+                            int resistUp = calculateTotalVaule(enemy, EffectType.MISSILE_BOOST);
                             // 飞弹增益百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double resistUpPret = calculateTotalUpPretVaule(guardian2, EffectType.MISSILE_BOOST_PRET);
+                            double resistUpPret = calculateTotalUpPretVaule(enemy, EffectType.MISSILE_BOOST_PRET);
                             // 飞弹降低：所有 POISON_RESIST_DOWN 类型效果的 value 总和
-                            int resistDown = calculateTotalVaule(guardian2, EffectType.MISSILE_DOWN);
+                            int resistDown = calculateTotalVaule(enemy, EffectType.MISSILE_DOWN);
                             // 飞弹降低百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double resistDownPret = calculateTotalDownPretVaule(guardian2, EffectType.MISSILE_DOWN_PRET);
+                            double resistDownPret = calculateTotalDownPretVaule(enemy, EffectType.MISSILE_DOWN_PRET);
 
 
                             // 2. 计算毒抗相关（直接基于你现有 EffectInstance 计算，不新增 Guardian 方法）
                             // 弹抗增益：所有 POISON_RESIST 类型效果的 value 总和
-                            int targetUp = calculateTotalVaule(enemy, EffectType.MISSILE_RESIST_BOOST);
+                            int targetUp = calculateTotalVaule(guardian2, EffectType.MISSILE_RESIST_BOOST);
                             // 弹抗增益百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double targetUpPret = calculateTotalDownPretVaule(enemy, EffectType.MISSILE_RESIST_BOOST_PRET);
+                            double targetUpPret = calculateTotalDownPretVaule(guardian2, EffectType.MISSILE_RESIST_BOOST_PRET);
                             // 弹抗降低：所有 POISON_RESIST_DOWN 类型效果的 value 总和
-                            int targetDown = calculateTotalVaule(enemy, EffectType.MISSILE_RESIST_DOWN);
+                            int targetDown = calculateTotalVaule(guardian2, EffectType.MISSILE_RESIST_DOWN);
                             // 弹抗降低百分比：所有 POISON_RESIST 类型效果的 value 乘积
-                            double targetDownPret = calculateTotalUpPretVaule(enemy, EffectType.MISSILE_RESIST_DOWN_PRET);
+                            double targetDownPret = calculateTotalUpPretVaule(guardian2, EffectType.MISSILE_RESIST_DOWN_PRET);
                             // 最终（仅基于 buff 计算，无新增方法）
 
                             int burnDamage = (int) (totalPoisonDamage * resistUpPret * resistDownPret * targetUpPret * targetDownPret
-                                    + (resistUp - resistDown + guardian2.getFdAtk() - enemy.getFdDef() - targetUp + targetDown));
+                                    + (resistUp - resistDown + enemy.getFdAtk() - guardian2.getFdDef() - targetUp + targetDown));
 
                             if (burnDamage < 0) {
                                 burnDamage = 0;
@@ -1337,7 +1437,7 @@ public class BattleManager {
                             burnDamage=triggerOnAttackedSkills(guardian2,burnDamage,EffectType.MISSILE_DAMAGE);
 
                             // 4. 扣除伤害
-                            enemy.setCurrentHp(enemy.getCurrentHp() - burnDamage);
+                            guardian2.setCurrentHp(guardian2.getCurrentHp() - burnDamage);
                             addLog("镇妖塔",
                                     enemy.getId(),
                                     enemy.getMaxHp(),
@@ -1472,30 +1572,31 @@ public class BattleManager {
                                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                                     enemies.forEach(g -> {
-                                        g.remove(EffectType.HP_RECOVER);
-                                        g.remove(EffectType.HEAL_BOOST);
-                                        g.remove(EffectType.HEAL_BOOST_PRET);
-                                        g.remove(EffectType.XU_HEAL_BOOST);
-                                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                                        g.remove(EffectType.ATTACK_UP);
-                                        g.remove(EffectType.ATTACK_UP_PRET);
-                                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.FIRE_DOWN);
-                                        g.remove(EffectType.FIRE_DOWN_PRET);
-                                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.POISON_DOWN);
-                                        g.remove(EffectType.POISON_RESIST_BOOST);
-                                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.MISSILE_DOWN);
-                                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                                        g.remove(EffectType.HP_UP);
-                                        g.remove(EffectType.HP_UP_PRET);
-                                        g.remove(EffectType.SPEED_UP);
-                                        g.remove(EffectType.SPEED_UP_PRET);
+                                        // 修改：只移除isSkill=false的效果实例
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
                                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                                         targetStatus.put(g.getId(), data);
                                     });
@@ -1882,7 +1983,7 @@ public class BattleManager {
                                 double healDowPret = calculateTotalDownPretVaule(g, EffectType.HEAL_DOWNT_PRET);
                                 int healBoost = calculateTotalVaule(g, EffectType.HEAL_BOOST);
                                 double healBoostPret = calculateTotalUpPretVaule(g, EffectType.HEAL_BOOST_PRET);
-                                int hel = (int) (heal * healDowPret * healBoostPret + defender.getZlDef() - healDow + healBoost);
+                                int hel = (int) (heal * healDowPret * healBoostPret + defender.getZlDef()+g.getZlAtk() - healDow + healBoost);
                                 if (hel < 0) {
                                     hel = 0;
                                 }
@@ -1911,7 +2012,7 @@ public class BattleManager {
                     // 顽强战意Lv1受到普通攻击时，提高自身生命上限141点，最多叠加20层；
                     if (!defender.isDead() && defender.getBuffStacks() < 20) {
                         defender.setBuffStacks(defender.getBuffStacks() + 1);
-                        int hel = 141 * skillLevel[1];
+                        int hel = 141 * skillLevel[1]+defender.getZlAtk();
                         if (duoBaoGuanHuan()) {
                             defender.setCurrentHp(defender.getCurrentHp() + hel);
                         } else {
@@ -5232,7 +5333,7 @@ public class BattleManager {
                         double healDowPret = calculateTotalDownPretVaule(g, EffectType.HEAL_DOWNT_PRET);
                         int healBoost = calculateTotalVaule(g, EffectType.HEAL_BOOST);
                         double healBoostPret = calculateTotalUpPretVaule(g, EffectType.HEAL_BOOST_PRET);
-                        int hel = (int) (heal * healDowPret * healBoostPret + v.getZlDef() - healDow + healBoost);
+                        int hel = (int) (heal * healDowPret * healBoostPret + v.getZlDef() +g.getZlAtk()- healDow + healBoost);
                         if (hel < 0) {
                             hel = 0;
                         }
@@ -5296,7 +5397,7 @@ public class BattleManager {
             if (!changsheng.isSilence()) {
                 int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(changsheng.getLevel(), changsheng.getStar().doubleValue());
                 if (skillLevel[1] > 0) {
-                    int hel = (int) (0.06 * skillLevel[1] * changsheng.getMaxHp());
+                    int hel = (int) (0.06 * skillLevel[1] * changsheng.getMaxHp())+changsheng.getZlAtk();
                     changsheng.setCurrentHp(changsheng.getCurrentHp() + hel);
                     addLog("残酷收割",
                             changsheng.getId(),
@@ -5816,7 +5917,7 @@ public class BattleManager {
                     .findFirst().get();
             if (fieldA != null && !fieldA.isDead()) {
                 int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
-                int heal = 104 * skillLevel[0];
+                int heal = 104 * skillLevel[0]+fieldA.getZlAtk();
                 fieldA.setCurrentHp(fieldA.getCurrentHp() + heal);
 
                 addLog("百花酿",
@@ -5843,7 +5944,7 @@ public class BattleManager {
                     .findFirst().get();
             if (fieldB != null && !fieldB.isDead()) {
                 int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(luoshen.getLevel(), luoshen.getStar().doubleValue());
-                int heal = 104 * skillLevel[0];
+                int heal = 104 * skillLevel[0]+fieldB.getZlAtk();
                 fieldB.setCurrentHp(fieldB.getCurrentHp() + heal);
 
                 addLog("百花酿",
@@ -5886,7 +5987,7 @@ public class BattleManager {
                     double healDowPret = calculateTotalDownPretVaule(g, EffectType.HEAL_DOWNT_PRET);
                     int healBoost = calculateTotalVaule(g, EffectType.HEAL_BOOST);
                     double healBoostPret = calculateTotalUpPretVaule(g, EffectType.HEAL_BOOST_PRET);
-                    int hel = (int) (heal * healDowPret * healBoostPret + changsheng.getZlDef() - healDow + healBoost);
+                    int hel = (int) (heal * healDowPret * healBoostPret + changsheng.getZlDef()+g.getZlAtk() - healDow + healBoost);
                     if (hel < 0) {
                         hel = 0;
                     }
@@ -5931,7 +6032,7 @@ public class BattleManager {
                     double healDowPret = calculateTotalDownPretVaule(g, EffectType.HEAL_DOWNT_PRET);
                     int healBoost = calculateTotalVaule(g, EffectType.HEAL_BOOST);
                     double healBoostPret = calculateTotalUpPretVaule(g, EffectType.HEAL_BOOST_PRET);
-                    int hel = (int) (heal * healDowPret * healBoostPret + changsheng.getZlDef() - healDow + healBoost);
+                    int hel = (int) (heal * healDowPret * healBoostPret + changsheng.getZlDef()+g.getZlAtk() - healDow + healBoost);
                     if (hel < 0) {
                         hel = 0;
                     }
@@ -6135,7 +6236,14 @@ public class BattleManager {
         }
 
     }
-
+    public Guardian getRandomAliveGuardian(List<Guardian> aliveUnits) {
+        if (aliveUnits == null || aliveUnits.isEmpty()) {
+            return null;
+        }
+        Random random = new Random();
+        int idx = random.nextInt(aliveUnits.size());
+        return aliveUnits.get(idx);
+    }
     // 处理回合开始效果
     private void processRoundStartEffects() {
         // 场下中毒效果（批量处理）
@@ -6246,6 +6354,113 @@ public class BattleManager {
                         EffectType.HP_UP,
                         DamageType.BUFF,
                         "生命上限+" + hel + "，攻击+" + value);
+            }
+        }
+
+        if (!fieldA.isSilence() && !fieldA.isDead() && fieldA != null && fieldA.getName().equals("玄武")) {
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldA.getLevel(), fieldA.getStar().doubleValue());
+            List<Guardian> allUnits = new ArrayList<>();
+            allUnits.addAll(campA);
+            allUnits.addAll(campB);
+
+            List<Guardian> aliveUnits = allUnits.stream()
+                    .filter(g -> g.isDead()&&!g.isFixedSoul())
+                    .collect(Collectors.toList());
+            if (ProbabilityBooleanUtils.randomByProbability(1.0 * skillLevel[0])&&Xtool.isNotNull(aliveUnits)) {
+                Guardian randomGuardian = getRandomAliveGuardian(aliveUnits);
+                int hel = (int)(randomGuardian.getMaxHp()*0.1);
+                if (duoBaoGuanHuan()) {
+                    fieldA.setCurrentHp(fieldA.getCurrentHp() + hel);
+                } else {
+                    fieldA.setMaxHp(fieldA.getMaxHp() + hel);
+                    fieldA.setCurrentHp(fieldA.getCurrentHp() + hel);
+                }
+                int value =  (int)(randomGuardian.getAttack()*0.1);;
+                fieldA.addEffect(EffectType.ATTACK_UP, value, 99, fieldA.getId());
+                randomGuardian.addEffect(EffectType.FIXED_SOUL, 0, 99, fieldA.getId());
+
+                addLog("吞噬",
+                        fieldA.getId(),
+                        fieldA.getMaxHp(),
+                        fieldA.getCurrentHp(),
+                        hel,
+                        fieldA.isOnField(),
+                        fieldA.getId(),
+                        fieldA.getMaxHp(),
+                        fieldA.getCurrentHp(),
+                        hel,
+                        fieldA.isOnField(),
+                        EffectType.HP_UP,
+                        DamageType.BUFF,
+                        "生命上限+" + hel + "，攻击+" + value);
+                addLog("固魂",
+                        randomGuardian.getId(),
+                        randomGuardian.getMaxHp(),
+                        randomGuardian.getCurrentHp(),
+                        0,
+                        randomGuardian.isOnField(),
+                        randomGuardian.getId(),
+                        randomGuardian.getMaxHp(),
+                        randomGuardian.getCurrentHp(),
+                        0,
+                        randomGuardian.isOnField(),
+                        EffectType.FIXED_SOUL,
+                        DamageType.BUFF,
+                        "固魂");
+            }
+
+        }
+
+        if (!fieldB.isSilence() && !fieldB.isDead() && fieldB != null && fieldB.getName().equals("玄武")) {
+            int[] skillLevel = CardSkillLevelUtil.calculateSkillLevels(fieldB.getLevel(), fieldB.getStar().doubleValue());
+            List<Guardian> allUnits = new ArrayList<>();
+            allUnits.addAll(campA);
+            allUnits.addAll(campB);
+
+            List<Guardian> aliveUnits = allUnits.stream()
+                    .filter(g -> g.isDead()&&!g.isFixedSoul())
+                    .collect(Collectors.toList());
+            if (ProbabilityBooleanUtils.randomByProbability(1.0 * skillLevel[0])&&Xtool.isNotNull(aliveUnits)) {
+                Guardian randomGuardian = getRandomAliveGuardian(aliveUnits);
+                int hel = (int)(randomGuardian.getMaxHp()*0.1);
+                if (duoBaoGuanHuan()) {
+                    fieldB.setCurrentHp(fieldB.getCurrentHp() + hel);
+                } else {
+                    fieldB.setMaxHp(fieldB.getMaxHp() + hel);
+                    fieldB.setCurrentHp(fieldB.getCurrentHp() + hel);
+                }
+                int value =  (int)(randomGuardian.getAttack()*0.1);;
+                fieldB.addEffect(EffectType.ATTACK_UP, value, 99, fieldB.getId());
+                randomGuardian.addEffect(EffectType.FIXED_SOUL, 0, 99, fieldB.getId());
+
+                addLog("吞噬",
+                        fieldB.getId(),
+                        fieldB.getMaxHp(),
+                        fieldB.getCurrentHp(),
+                        hel,
+                        fieldB.isOnField(),
+                        fieldB.getId(),
+                        fieldB.getMaxHp(),
+                        fieldB.getCurrentHp(),
+                        hel,
+                        fieldB.isOnField(),
+                        EffectType.HP_UP,
+                        DamageType.BUFF,
+                        "生命上限+" + hel + "，攻击+" + value);
+                addLog("固魂",
+                        randomGuardian.getId(),
+                        randomGuardian.getMaxHp(),
+                        randomGuardian.getCurrentHp(),
+                        0,
+                        randomGuardian.isOnField(),
+                        randomGuardian.getId(),
+                        randomGuardian.getMaxHp(),
+                        randomGuardian.getCurrentHp(),
+                        0,
+                        randomGuardian.isOnField(),
+                        EffectType.FIXED_SOUL,
+                        DamageType.BUFF,
+                        "固魂");
             }
         }
 
@@ -10707,30 +10922,31 @@ public class BattleManager {
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                     enemies.forEach(g -> {
-                        g.remove(EffectType.HP_RECOVER);
-                        g.remove(EffectType.HEAL_BOOST);
-                        g.remove(EffectType.HEAL_BOOST_PRET);
-                        g.remove(EffectType.XU_HEAL_BOOST);
-                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                        g.remove(EffectType.ATTACK_UP);
-                        g.remove(EffectType.ATTACK_UP_PRET);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                        g.remove(EffectType.FIRE_DOWN);
-                        g.remove(EffectType.FIRE_DOWN_PRET);
-                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.POISON_DOWN);
-                        g.remove(EffectType.POISON_RESIST_BOOST);
-                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                        g.remove(EffectType.MISSILE_DOWN);
-                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.HP_UP);
-                        g.remove(EffectType.HP_UP_PRET);
-                        g.remove(EffectType.SPEED_UP);
-                        g.remove(EffectType.SPEED_UP_PRET);
+                        // 修改：只移除isSkill=false的效果实例
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                         targetStatus.put(g.getId(), data);
                     });
@@ -10753,30 +10969,31 @@ public class BattleManager {
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                     enemies.forEach(g -> {
-                        g.remove(EffectType.HP_RECOVER);
-                        g.remove(EffectType.HEAL_BOOST);
-                        g.remove(EffectType.HEAL_BOOST_PRET);
-                        g.remove(EffectType.XU_HEAL_BOOST);
-                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                        g.remove(EffectType.ATTACK_UP);
-                        g.remove(EffectType.ATTACK_UP_PRET);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                        g.remove(EffectType.FIRE_DOWN);
-                        g.remove(EffectType.FIRE_DOWN_PRET);
-                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.POISON_DOWN);
-                        g.remove(EffectType.POISON_RESIST_BOOST);
-                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                        g.remove(EffectType.MISSILE_DOWN);
-                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.HP_UP);
-                        g.remove(EffectType.HP_UP_PRET);
-                        g.remove(EffectType.SPEED_UP);
-                        g.remove(EffectType.SPEED_UP_PRET);
+                        // 修改：只移除isSkill=false的效果实例
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                         targetStatus.put(g.getId(), data);
                     });
@@ -10800,30 +11017,31 @@ public class BattleManager {
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                     enemies.forEach(g -> {
-                        g.remove(EffectType.HP_RECOVER);
-                        g.remove(EffectType.HEAL_BOOST);
-                        g.remove(EffectType.HEAL_BOOST_PRET);
-                        g.remove(EffectType.XU_HEAL_BOOST);
-                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                        g.remove(EffectType.ATTACK_UP);
-                        g.remove(EffectType.ATTACK_UP_PRET);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                        g.remove(EffectType.FIRE_DOWN);
-                        g.remove(EffectType.FIRE_DOWN_PRET);
-                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.POISON_DOWN);
-                        g.remove(EffectType.POISON_RESIST_BOOST);
-                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                        g.remove(EffectType.MISSILE_DOWN);
-                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.HP_UP);
-                        g.remove(EffectType.HP_UP_PRET);
-                        g.remove(EffectType.SPEED_UP);
-                        g.remove(EffectType.SPEED_UP_PRET);
+                        // 修改：只移除isSkill=false的效果实例
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                         targetStatus.put(g.getId(), data);
                     });
@@ -10846,30 +11064,31 @@ public class BattleManager {
                 Map<String, TargetBattleData> targetStatus = new HashMap<>();
                 if (ProbabilityBooleanUtils.randomByProbability(0.4) && Xtool.isNotNull(enemies)) {
                     enemies.forEach(g -> {
-                        g.remove(EffectType.HP_RECOVER);
-                        g.remove(EffectType.HEAL_BOOST);
-                        g.remove(EffectType.HEAL_BOOST_PRET);
-                        g.remove(EffectType.XU_HEAL_BOOST);
-                        g.remove(EffectType.XU_HEAL_BOOST_PRET);
-                        g.remove(EffectType.ATTACK_UP);
-                        g.remove(EffectType.ATTACK_UP_PRET);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST);
-                        g.remove(EffectType.ATTACK_RESIST_BOOST_PRET);
-                        g.remove(EffectType.FIRE_DOWN);
-                        g.remove(EffectType.FIRE_DOWN_PRET);
-                        g.remove(EffectType.FIRE_RESIST_BOOST);
-                        g.remove(EffectType.FIRE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.POISON_DOWN);
-                        g.remove(EffectType.POISON_RESIST_BOOST);
-                        g.remove(EffectType.POISON_RESIST_BOOST_PRET);
-                        g.remove(EffectType.MISSILE_DOWN);
-                        g.remove(EffectType.MISSILE_DOWN_PRET);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST);
-                        g.remove(EffectType.MISSILE_RESIST_BOOST_PRET);
-                        g.remove(EffectType.HP_UP);
-                        g.remove(EffectType.HP_UP_PRET);
-                        g.remove(EffectType.SPEED_UP);
-                        g.remove(EffectType.SPEED_UP_PRET);
+                        // 修改：只移除isSkill=false的效果实例
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_RECOVER && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.XU_HEAL_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.ATTACK_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.FIRE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.POISON_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_DOWN_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.MISSILE_RESIST_BOOST_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.HP_UP_PRET && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP && !effect.getIsSkill());
+                        g.getEffects().removeIf(effect -> effect.getType() == EffectType.SPEED_UP_PRET && !effect.getIsSkill());
                         TargetBattleData data = new TargetBattleData(g.getMaxHp(), g.getCurrentHp(), 50, g.isOnField());
                         targetStatus.put(g.getId(), data);
                     });
@@ -10955,7 +11174,7 @@ public class BattleManager {
 //                    × 技能减伤buff1
 //                    × 技能减伤buff2
 //                    − 固定减伤（比如飞弹减伤500）
-                    hel = (int) (hel * healDowPret * healBoostPret + guardian.getZlDef() - healDow + healBoost);
+                    hel = (int) (hel * healDowPret * healBoostPret + guardian.getZlDef()+fieldA.getZlAtk() - healDow + healBoost);
                     if (hel < 0) {
                         hel = 0;
                     }
@@ -11056,7 +11275,7 @@ public class BattleManager {
 //                    × 技能减伤buff1
 //                    × 技能减伤buff2
 //                    − 固定减伤（比如飞弹减伤500）
-                    hel = (int) (hel * healDowPret * healBoostPret + guardian.getZlDef() - healDow + healBoost);
+                    hel = (int) (hel * healDowPret * healBoostPret + guardian.getZlDef()+fieldB.getZlAtk() - healDow + healBoost);
                     if (hel < 0) {
                         hel = 0;
                     }
