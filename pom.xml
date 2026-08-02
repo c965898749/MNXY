@@ -12,7 +12,7 @@
   </parent>
 
   <groupId>com.sy</groupId>
-  <artifactId>YIMEM</artifactId>
+  <artifactId>MNXY</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -34,30 +34,30 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
-    
+
     <!-- MyBatis Plus -->
     <dependency>
       <groupId>com.baomidou</groupId>
       <artifactId>mybatis-plus-boot-starter</artifactId>
       <version>${mybatis-plus.version}</version>
     </dependency>
-    
+
     <!-- MySQL Connector -->
     <dependency>
       <groupId>mysql</groupId>
@@ -65,27 +65,27 @@
       <version>8.0.33</version>
       <scope>runtime</scope>
     </dependency>
-    
+
     <!-- Druid DataSource -->
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>druid-spring-boot-starter</artifactId>
       <version>${druid.version}</version>
     </dependency>
-    
+
     <!-- Redis -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
     </dependency>
-    
+
     <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <optional>true</optional>
     </dependency>
-    
+
     <!-- JUnit 4 for compatibility -->
     <dependency>
       <groupId>junit</groupId>
@@ -98,14 +98,14 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-    
+
     <!-- File Upload -->
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
       <version>1.4</version>
     </dependency>
-    
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -117,13 +117,13 @@
       <artifactId>fastjson</artifactId>
       <version>1.2.83</version>
     </dependency>
-    
+
     <!-- Apache Commons -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
@@ -135,28 +135,28 @@
       <artifactId>pagehelper-spring-boot-starter</artifactId>
       <version>1.4.6</version>
     </dependency>
-    
+
     <!-- FastDFS -->
     <dependency>
       <groupId>net.oschina.zcx7878</groupId>
       <artifactId>fastdfs-client-java</artifactId>
       <version>${fastdfs.version}</version>
     </dependency>
-    
+
     <!-- JSON Simple -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
       <version>1.1.1</version>
     </dependency>
-    
+
     <!-- Jsoup -->
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
       <version>1.15.3</version>
     </dependency>
-    
+
 
     <!-- UserAgentUtils -->
     <dependency>
@@ -164,35 +164,42 @@
       <artifactId>UserAgentUtils</artifactId>
       <version>1.21</version>
     </dependency>
-    
+
     <!-- OSHI -->
     <dependency>
       <groupId>com.github.oshi</groupId>
       <artifactId>oshi-core</artifactId>
       <version>${oshi.version}</version>
     </dependency>
-    
+
     <!-- JCIFS -->
     <dependency>
       <groupId>jcifs</groupId>
       <artifactId>jcifs</artifactId>
       <version>1.3.17</version>
     </dependency>
-    
+
     <!-- Commons Net -->
     <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
       <version>3.9.0</version>
     </dependency>
-    
+
     <!-- Hutool -->
     <dependency>
       <groupId>cn.hutool</groupId>
       <artifactId>hutool-all</artifactId>
       <version>5.8.22</version>
     </dependency>
-    
+
+    <!-- 阿里云MNS SDK -->
+    <dependency>
+      <groupId>com.aliyun</groupId>
+      <artifactId>dysmsapi20170525</artifactId>
+      <!-- 请将 'the-latest-version' 替换为最新版本号：https://mvnrepository.com/artifact/com.aliyun/dysmsapi20170525 -->
+      <version>3.1.1</version>
+    </dependency>
     <!-- Baidu AI -->
     <dependency>
       <groupId>com.baidu.aip</groupId>
@@ -209,14 +216,14 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <!-- IP2Region -->
     <dependency>
       <groupId>org.lionsoul</groupId>
       <artifactId>ip2region</artifactId>
       <version>2.7.0</version>
     </dependency>
-    
+
     <!-- OkHttp -->
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
@@ -226,7 +233,7 @@
 
 
   </dependencies>
-  
+
   <repositories>
     <repository>
       <id>aliyun-repos</id>
@@ -257,7 +264,7 @@
           </excludes>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -267,7 +274,7 @@
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.mybatis.generator</groupId>
         <artifactId>mybatis-generator-maven-plugin</artifactId>
